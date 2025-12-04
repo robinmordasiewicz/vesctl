@@ -61,6 +61,7 @@ jobs:
         run: go mod download
 
       - name: Run unit tests
+        shell: bash
         run: go test -v -race -coverprofile=coverage.out ./pkg/...
 
       - name: Upload coverage
