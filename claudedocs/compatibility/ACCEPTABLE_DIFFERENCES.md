@@ -331,6 +331,68 @@ Flag descriptions are enhanced for clarity:
 
 ---
 
+## 12. Phase 7 Site Command Differences
+
+Phase 7 testing validated the `site` command family for cloud site management (AWS VPC, Azure VNet).
+
+### Test Results Summary
+
+| Test | Result | Notes |
+|------|--------|-------|
+| site --help | PASS | Identical |
+| site aws_vpc --help | PASS | Identical |
+| site azure_vnet --help | PASS | Identical |
+| site aws_vpc create | FAIL | 20 missing flags (simplified interface) |
+| site aws_vpc delete | FAIL | Help text differs |
+| site aws_vpc replace | FAIL | Help text differs |
+| site aws_vpc run | PASS_NEW | 17 common, 4 new flags |
+| site azure_vnet create | FAIL | 25 missing flags (simplified interface) |
+| site azure_vnet delete | FAIL | Help text differs |
+| site azure_vnet replace | FAIL | Help text differs |
+| site azure_vnet run | PASS_NEW | 17 common, 4 new flags |
+
+### Site Command Design Philosophy
+
+The original vesctl has terraform-like detailed flags for site creation:
+
+**Original AWS VPC Create Flags (39 flags):**
+- `--action`, `--azs`, `--cloud-cred`, `--disk-sizes`, `--gw-type`
+- `--inside-subnets`, `--outside-subnets`, `--vpc-cidr`, `--vpc-id`
+- `--nodes-per-az`, `--network-policies`, `--fwd-proxy-policies`
+- And 27 more configuration flags
+
+**Our AWS VPC Create Flags (24 flags):**
+- Simplified interface with 19 common flags
+- 5 new enhanced flags
+- Uses `--input-file` approach for complex configurations
+
+### Rationale
+
+Our implementation favors:
+1. **YAML/JSON input files** for complex configurations instead of 39+ CLI flags
+2. **Simpler CLI** with essential flags only
+3. **API-first approach** where the input file matches the API schema directly
+
+This is a design choice, not a bug. Users who need detailed flag control can use input files.
+
+### Missing Flags by Category
+
+**AWS VPC (20 missing):**
+- Network config: `--inside-subnets`, `--outside-subnets`, `--inside-subnet-ids`, `--outside-subnet-ids`
+- VPC config: `--vpc-id`, `--vpc-tag`, `--vpc-cidr` (partially)
+- Gateway: `--gw-type`, `--nodes-per-az`
+- Policies: `--network-policies`, `--fwd-proxy-policies`
+- Routing: `--inside-static-rt`, `--outside-static-rt`
+- Other: `--action`, `--disk-sizes`, `--global-networks`, `--ssh-pubkey-file`
+
+**Azure VNet (25 missing):**
+- Similar to AWS but with Azure-specific names
+- `--existing-vnet`, `--existing-vnet-rg`, `--vnet-name`
+- `--inside-subnet-cidrs`, `--inside-subnet-names`, `--inside-subnet-rgs`
+- `--outside-subnet-cidrs`, `--outside-subnet-names`, `--outside-subnet-rgs`
+
+---
+
 ## Summary
 
 These differences are documented and accepted:
@@ -347,3 +409,4 @@ These differences are documented and accepted:
 9. **Create test race condition**: Test framework limitation, not implementation difference
 10. **New resources**: certificate, user (and others from current API specs)
 11. **Request command enhancements**: RPC evolution (54 deprecated, 376 new), enhanced secrets/command-sequence help text
+12. **Site commands**: Simplified interface (input-file approach vs 39+ CLI flags)
