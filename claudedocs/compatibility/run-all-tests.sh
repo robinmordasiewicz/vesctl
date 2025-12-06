@@ -49,7 +49,7 @@ vesctl Compatibility Test Runner
 Usage: ./run-all-tests.sh [OPTIONS]
 
 Options:
-  --phase N      Run only phase N (1-4)
+  --phase N      Run only phase N (1-5)
   --verbose, -v  Show verbose output
   --with-api     Run API-dependent tests (requires VES_P12_* credentials)
   --help, -h     Show this help message
@@ -58,7 +58,8 @@ Phases:
   1: Configure/Authentication commands
   2: Simple commands (version, completion)
   3: Configuration CRUD operations
-  4: Other commands (request, site, api-endpoint)
+  4: Namespace CRUD operations (requires API)
+  5: Multi-resource validation (help tests + API list)
 
 Environment Variables:
   ORIGINAL_VESCTL   Path to original vesctl (default: ./vesctl-0.2.47-original)
@@ -168,6 +169,19 @@ if [[ "$WITH_API" == "true" ]]; then
         run_phase 4 "${SCRIPT_DIR}/tests/phase4-namespace/test-namespace-crud.sh"
     else
         echo "Phase 4 script not found: ${SCRIPT_DIR}/tests/phase4-namespace/test-namespace-crud.sh"
+    fi
+fi
+
+# Phase 5: Multi-resource validation
+# 5A: Help tests (no API required)
+if [[ -x "${SCRIPT_DIR}/tests/phase5-resources/test-resource-help.sh" ]]; then
+    run_phase 5 "${SCRIPT_DIR}/tests/phase5-resources/test-resource-help.sh"
+fi
+
+# 5B: List API tests (requires API credentials)
+if [[ "$WITH_API" == "true" ]]; then
+    if [[ -x "${SCRIPT_DIR}/tests/phase5-resources/test-resource-list.sh" ]]; then
+        run_phase 5 "${SCRIPT_DIR}/tests/phase5-resources/test-resource-list.sh"
     fi
 fi
 

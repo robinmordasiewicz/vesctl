@@ -229,6 +229,41 @@ The test framework runs our version first for create tests (`--ours-first` flag)
 
 ---
 
+## 10. Phase 5 Multi-Resource Validation Findings
+
+Phase 5 testing validated help text and command structure for multiple resource types. Some resources that exist in our implementation (from current API specs) do not exist in the original vesctl.
+
+### Resources Not in Original vesctl
+
+The following resources show as "failures" in Phase 5 tests because they are **enhancements** in our implementation:
+
+| Resource | Original Status | Our Status | Notes |
+|----------|-----------------|------------|-------|
+| `certificate` | Not supported | ✓ Supported | New in current API |
+| `user` | Not supported | ✓ Supported | New in current API |
+
+### Detection Pattern
+
+When testing a resource that doesn't exist in the original:
+- Original vesctl shows the parent command help (e.g., `configuration list --help`)
+- Our vesctl shows the specific resource command help (e.g., `configuration list certificate --help`)
+
+### Test Results Summary (Phase 5A - Help Text)
+
+| Resource Type | Tests Run | Pass | Fail | Notes |
+|---------------|-----------|------|------|-------|
+| http_loadbalancer | 5 | 5 | 0 | Fully compatible |
+| origin_pool | 5 | 5 | 0 | Fully compatible |
+| app_firewall | 5 | 5 | 0 | Fully compatible |
+| healthcheck | 5 | 5 | 0 | Fully compatible |
+| dns_zone | 5 | 5 | 0 | Fully compatible |
+| certificate | 5 | 0 | 5 | Enhancement - not in original |
+| user | 5 | 0 | 5 | Enhancement - not in original |
+
+**Test Impact**: Resources marked as "fail" are actually enhancements. The test framework doesn't yet detect when the original shows parent help vs specific resource help.
+
+---
+
 ## Summary
 
 These differences are documented and accepted:
@@ -243,3 +278,4 @@ These differences are documented and accepted:
 7. **Delete namespace**: Command missing in original (our enhancement)
 8. **Response format validation**: Original rejects valid values (our fix)
 9. **Create test race condition**: Test framework limitation, not implementation difference
+10. **New resources**: certificate, user (and others from current API specs)
