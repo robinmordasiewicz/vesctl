@@ -23,9 +23,6 @@ builds:
     goarch:
       - amd64
       - arm64
-    ignore:
-      - goos: windows
-        goarch: arm64
     ldflags:
       - -s -w
       - -X github.com/robinmordasiewicz/f5xc/cmd.Version={{.Version}}
@@ -121,8 +118,11 @@ release:
     sudo mv vesctl /usr/local/bin/
     ```
 
-    **Windows**
+    **Windows (amd64)**
     Download `vesctl_{{ .Version }}_windows_amd64.zip` and extract to your PATH.
+
+    **Windows (arm64)**
+    Download `vesctl_{{ .Version }}_windows_arm64.zip` and extract to your PATH.
   footer: |
     **Full Changelog**: https://github.com/robinmordasiewicz/vesctl/compare/{{ .PreviousTag }}...{{ .Tag }}
 
