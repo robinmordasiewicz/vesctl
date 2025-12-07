@@ -6,19 +6,25 @@ repo_url: https://github.com/robinmordasiewicz/vesctl
 
 theme:
   name: material
+  custom_dir: docs/overrides
   palette:
-    - scheme: default
-      primary: deep purple
-      accent: purple
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
-    - scheme: slate
-      primary: deep purple
-      accent: purple
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
   features:
     - navigation.tabs
     - navigation.sections
@@ -26,13 +32,19 @@ theme:
     - navigation.path
     - navigation.top
     - navigation.footer
+    - navigation.instant
+    - navigation.tracking
     - search.suggest
     - search.highlight
+    - search.share
     - content.code.copy
     - content.code.annotate
     - content.tabs.link
+    - toc.follow
+    - header.autohide
   icon:
     repo: fontawesome/brands/github
+    logo: material/console
 
 plugins:
   - search

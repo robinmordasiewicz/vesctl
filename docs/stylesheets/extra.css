@@ -1,66 +1,726 @@
-/* vesctl Documentation Custom Styles */
+/* ==========================================================================
+   F5 Distributed Cloud Documentation Theme
+   Matches: https://docs.cloud.f5.com/docs-v2/platform
+   ========================================================================== */
 
-/* Terminal-style code blocks */
+/* ==========================================================================
+   CSS Custom Properties (F5 Cloud Color Palette)
+   ========================================================================== */
+
+:root,
+[data-md-color-scheme="default"] {
+  /* Primary Colors */
+  --md-primary-fg-color: #4f73ff;
+  --md-primary-fg-color--light: #6b8aff;
+  --md-primary-fg-color--dark: #3d5ee6;
+  --md-primary-bg-color: #ffffff;
+  --md-primary-bg-color--light: #f3f4f9;
+
+  /* Accent Colors */
+  --md-accent-fg-color: #4f73ff;
+  --md-accent-fg-color--transparent: rgba(79, 115, 255, 0.1);
+  --md-accent-bg-color: #e5eaff;
+
+  /* Text Colors */
+  --md-default-fg-color: #0f1e57;
+  --md-default-fg-color--light: #6c778c;
+  --md-default-fg-color--lighter: #a0a7c2;
+  --md-default-fg-color--lightest: #c9cfdf;
+  --md-default-bg-color: #ffffff;
+  --md-default-bg-color--light: #f3f4f9;
+  --md-default-bg-color--lighter: #f8f9fc;
+  --md-default-bg-color--lightest: #fafbfd;
+
+  /* Code Colors */
+  --md-code-fg-color: #0f1e57;
+  --md-code-bg-color: #f3f4f9;
+  --md-code-hl-color: rgba(79, 115, 255, 0.1);
+  --md-code-hl-number-color: #d63384;
+  --md-code-hl-special-color: #4f73ff;
+  --md-code-hl-function-color: #6f42c1;
+  --md-code-hl-constant-color: #0d6efd;
+  --md-code-hl-keyword-color: #d63384;
+  --md-code-hl-string-color: #198754;
+  --md-code-hl-name-color: #0f1e57;
+  --md-code-hl-operator-color: #6c778c;
+  --md-code-hl-punctuation-color: #6c778c;
+  --md-code-hl-comment-color: #a0a7c2;
+  --md-code-hl-generic-color: #0f1e57;
+  --md-code-hl-variable-color: #0f1e57;
+
+  /* Typography */
+  --md-typeset-color: #0f1e57;
+  --md-typeset-a-color: #4f73ff;
+
+  /* Admonitions */
+  --md-admonition-fg-color: #0f1e57;
+  --md-admonition-bg-color: #f3f4f9;
+
+  /* Footer */
+  --md-footer-fg-color: #ffffff;
+  --md-footer-fg-color--light: rgba(255, 255, 255, 0.7);
+  --md-footer-fg-color--lighter: rgba(255, 255, 255, 0.5);
+  --md-footer-bg-color: #0f1e57;
+  --md-footer-bg-color--dark: #0a1540;
+
+  /* Shadows */
+  --md-shadow-z1: 0 2px 4px rgba(15, 30, 87, 0.05), 0 1px 2px rgba(15, 30, 87, 0.08);
+  --md-shadow-z2: 0 4px 8px rgba(15, 30, 87, 0.08), 0 2px 4px rgba(15, 30, 87, 0.1);
+  --md-shadow-z3: 0 8px 16px rgba(15, 30, 87, 0.1), 0 4px 8px rgba(15, 30, 87, 0.12);
+}
+
+/* Dark mode adjustments */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #6b8aff;
+  --md-primary-fg-color--light: #8aa3ff;
+  --md-primary-fg-color--dark: #4f73ff;
+  --md-accent-fg-color: #6b8aff;
+  --md-default-fg-color: #e6e9f3;
+  --md-default-fg-color--light: #a0a7c2;
+  --md-default-bg-color: #1a1f36;
+  --md-default-bg-color--light: #242b47;
+  --md-code-bg-color: #242b47;
+  --md-typeset-color: #e6e9f3;
+  --md-footer-bg-color: #0f1e57;
+}
+
+/* ==========================================================================
+   Typography
+   ========================================================================== */
+
+.md-typeset {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--md-default-fg-color);
+}
+
+.md-typeset h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--md-default-fg-color);
+  margin-top: 0;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.md-typeset h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--md-default-fg-color);
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e6e9f3;
+}
+
+.md-typeset h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--md-default-fg-color);
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.md-typeset h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--md-default-fg-color);
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.md-typeset h5,
+.md-typeset h6 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--md-default-fg-color);
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.md-typeset p {
+  margin-bottom: 1rem;
+}
+
+/* ==========================================================================
+   Links
+   ========================================================================== */
+
+.md-typeset a {
+  color: var(--md-typeset-a-color);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.md-typeset a:hover {
+  color: var(--md-primary-fg-color--dark);
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   Header / Navigation Bar
+   ========================================================================== */
+
+.md-header {
+  background-color: var(--md-primary-bg-color);
+  box-shadow: 0 1px 0 #e6e9f3;
+  color: var(--md-default-fg-color);
+}
+
+.md-header[data-md-state="shadow"] {
+  box-shadow: var(--md-shadow-z2);
+}
+
+.md-header__button {
+  color: var(--md-default-fg-color);
+}
+
+.md-header__button:hover {
+  color: var(--md-primary-fg-color);
+}
+
+.md-header__title {
+  color: var(--md-default-fg-color);
+  font-weight: 600;
+}
+
+.md-header__topic {
+  font-weight: 600;
+}
+
+/* Search */
+.md-search__input {
+  background-color: var(--md-default-bg-color--light);
+  color: var(--md-default-fg-color);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.md-search__input::placeholder {
+  color: var(--md-default-fg-color--lighter);
+}
+
+.md-search__input:hover {
+  background-color: var(--md-default-bg-color--lighter);
+}
+
+/* ==========================================================================
+   Navigation Tabs
+   ========================================================================== */
+
+.md-tabs {
+  background-color: var(--md-primary-bg-color);
+  border-bottom: 1px solid #e6e9f3;
+}
+
+.md-tabs__link {
+  color: var(--md-default-fg-color--light);
+  font-size: 0.875rem;
+  font-weight: 500;
+  opacity: 1;
+  transition: color 0.2s ease;
+}
+
+.md-tabs__link:hover,
+.md-tabs__link--active {
+  color: var(--md-primary-fg-color);
+}
+
+.md-tabs__link--active {
+  border-bottom: 2px solid var(--md-primary-fg-color);
+}
+
+/* ==========================================================================
+   Sidebar Navigation
+   ========================================================================== */
+
+.md-sidebar {
+  background-color: var(--md-default-bg-color);
+}
+
+.md-sidebar--primary {
+  border-right: 1px solid #e6e9f3;
+}
+
+.md-nav__title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--md-default-fg-color--light);
+  padding: 0.75rem 0.75rem 0.5rem;
+}
+
+.md-nav__item {
+  padding: 0;
+}
+
+.md-nav__link {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--md-default-fg-color);
+  padding: 0.5rem 0.75rem;
+  margin: 0.125rem 0;
+  border-radius: 0.375rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.md-nav__link:hover {
+  background-color: var(--md-accent-fg-color--transparent);
+  color: var(--md-primary-fg-color);
+}
+
+.md-nav__link--active,
+.md-nav__link--active:hover {
+  background-color: var(--md-accent-fg-color--transparent);
+  color: var(--md-primary-fg-color);
+  font-weight: 500;
+}
+
+.md-nav__link--passed {
+  color: var(--md-default-fg-color--light);
+}
+
+/* Nested navigation */
+.md-nav--secondary .md-nav__link {
+  font-size: 0.8125rem;
+}
+
+/* Table of contents (right sidebar) */
+.md-nav--secondary {
+  border-left: 1px solid #e6e9f3;
+}
+
+.md-nav--secondary .md-nav__title {
+  font-size: 0.6875rem;
+  box-shadow: none;
+  background: transparent;
+}
+
+/* ==========================================================================
+   Code Blocks
+   ========================================================================== */
+
 .md-typeset code {
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.85em;
+  background-color: var(--md-code-bg-color);
+  color: var(--md-code-fg-color);
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.375rem;
 }
 
-/* Command output styling */
+.md-typeset pre {
+  background-color: var(--md-code-bg-color);
+  border-radius: 0.5rem;
+  border: 1px solid #e6e9f3;
+  box-shadow: none;
+}
+
 .md-typeset pre > code {
-  font-size: 0.85em;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  padding: 1rem;
 }
 
-/* Admonition styling */
-.md-typeset .admonition.note {
-  border-left-color: #7c4dff;
+/* Code copy button */
+.md-clipboard {
+  color: var(--md-default-fg-color--lighter);
 }
 
-/* Table styling */
+.md-clipboard:hover {
+  color: var(--md-primary-fg-color);
+}
+
+/* Code annotations */
+.md-typeset .md-annotation {
+  background-color: var(--md-primary-fg-color);
+}
+
+/* ==========================================================================
+   Tables
+   ========================================================================== */
+
 .md-typeset table:not([class]) {
-  font-size: 0.85em;
+  font-size: 0.875rem;
+  border: 1px solid #e6e9f3;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: none;
 }
 
 .md-typeset table:not([class]) th {
+  background-color: var(--md-default-bg-color--light);
+  color: var(--md-default-fg-color);
   font-weight: 600;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e6e9f3;
+}
+
+.md-typeset table:not([class]) td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e6e9f3;
+  vertical-align: top;
+}
+
+.md-typeset table:not([class]) tr:last-child td {
+  border-bottom: none;
+}
+
+.md-typeset table:not([class]) tr:hover {
+  background-color: var(--md-default-bg-color--lightest);
+}
+
+.md-typeset table:not([class]) code {
+  font-size: 0.8125rem;
   white-space: nowrap;
 }
 
-/* Code in tables */
-.md-typeset table:not([class]) code {
-  font-size: 0.9em;
-  padding: 0.1em 0.4em;
+/* ==========================================================================
+   Admonitions
+   ========================================================================== */
+
+.md-typeset .admonition,
+.md-typeset details {
+  border: 1px solid #e6e9f3;
+  border-radius: 0.5rem;
+  box-shadow: none;
+  background-color: var(--md-default-bg-color);
+  overflow: hidden;
 }
 
-/* Header styling */
-.md-typeset h1 {
-  font-weight: 700;
-}
-
-/* Footer link styling */
-.md-footer-meta__inner {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-}
-
-/* Navigation improvements */
-.md-nav__link {
-  font-size: 0.75rem;
-}
-
-/* Search improvements */
-.md-search__input {
-  font-size: 0.9rem;
-}
-
-/* Inline code improvements */
-.md-typeset :not(pre) > code {
-  padding: 0.1em 0.3em;
-  border-radius: 3px;
-}
-
-/* Tab styling */
-.md-typeset .tabbed-labels > label {
-  font-size: 0.75rem;
+.md-typeset .admonition-title,
+.md-typeset details summary {
+  background-color: var(--md-default-bg-color--light);
   font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid #e6e9f3;
+}
+
+.md-typeset .admonition-title::before,
+.md-typeset details summary::before {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Note */
+.md-typeset .admonition.note,
+.md-typeset details.note {
+  border-left: 4px solid var(--md-primary-fg-color);
+}
+
+.md-typeset .note > .admonition-title,
+.md-typeset .note > summary {
+  background-color: rgba(79, 115, 255, 0.1);
+}
+
+/* Info */
+.md-typeset .admonition.info,
+.md-typeset details.info {
+  border-left: 4px solid #17a2b8;
+}
+
+.md-typeset .info > .admonition-title,
+.md-typeset .info > summary {
+  background-color: rgba(23, 162, 184, 0.1);
+}
+
+/* Tip / Success */
+.md-typeset .admonition.tip,
+.md-typeset details.tip,
+.md-typeset .admonition.success,
+.md-typeset details.success {
+  border-left: 4px solid #198754;
+}
+
+.md-typeset .tip > .admonition-title,
+.md-typeset .tip > summary,
+.md-typeset .success > .admonition-title,
+.md-typeset .success > summary {
+  background-color: rgba(25, 135, 84, 0.1);
+}
+
+/* Warning */
+.md-typeset .admonition.warning,
+.md-typeset details.warning {
+  border-left: 4px solid #ffc107;
+}
+
+.md-typeset .warning > .admonition-title,
+.md-typeset .warning > summary {
+  background-color: rgba(255, 193, 7, 0.1);
+}
+
+/* Danger / Error */
+.md-typeset .admonition.danger,
+.md-typeset details.danger,
+.md-typeset .admonition.error,
+.md-typeset details.error {
+  border-left: 4px solid #dc3545;
+}
+
+.md-typeset .danger > .admonition-title,
+.md-typeset .danger > summary,
+.md-typeset .error > .admonition-title,
+.md-typeset .error > summary {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+/* ==========================================================================
+   Tabs
+   ========================================================================== */
+
+.md-typeset .tabbed-set {
+  border: 1px solid #e6e9f3;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.md-typeset .tabbed-labels {
+  background-color: var(--md-default-bg-color--light);
+  border-bottom: 1px solid #e6e9f3;
+}
+
+.md-typeset .tabbed-labels > label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--md-default-fg-color--light);
+  padding: 0.75rem 1rem;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.md-typeset .tabbed-labels > label:hover {
+  color: var(--md-primary-fg-color);
+}
+
+.md-typeset .tabbed-labels > label.tabbed-labels--active,
+.md-typeset .tabbed-set > input:checked + label {
+  color: var(--md-primary-fg-color);
+  border-bottom-color: var(--md-primary-fg-color);
+  background-color: var(--md-default-bg-color);
+}
+
+.md-typeset .tabbed-content {
+  padding: 1rem;
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+
+.md-footer {
+  background-color: var(--md-footer-bg-color);
+}
+
+.md-footer-meta {
+  background-color: var(--md-footer-bg-color--dark);
+}
+
+.md-footer__link {
+  color: var(--md-footer-fg-color);
+}
+
+.md-footer__link:hover {
+  color: var(--md-footer-fg-color);
+  opacity: 0.8;
+}
+
+.md-footer__title {
+  color: var(--md-footer-fg-color--light);
+}
+
+.md-footer__direction {
+  color: var(--md-footer-fg-color--lighter);
+}
+
+/* ==========================================================================
+   Content Area
+   ========================================================================== */
+
+.md-content {
+  max-width: 100%;
+}
+
+.md-content__inner {
+  padding: 2rem;
+}
+
+@media screen and (min-width: 76.25em) {
+  .md-content__inner {
+    padding: 2rem 3rem;
+  }
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.md-typeset .md-button {
+  background-color: var(--md-primary-fg-color);
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  padding: 0.625rem 1.25rem;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.md-typeset .md-button:hover {
+  background-color: var(--md-primary-fg-color--dark);
+  box-shadow: var(--md-shadow-z1);
+}
+
+.md-typeset .md-button--primary {
+  background-color: var(--md-primary-fg-color);
+}
+
+.md-typeset .md-button--secondary {
+  background-color: transparent;
+  color: var(--md-primary-fg-color);
+  border: 1px solid var(--md-primary-fg-color);
+}
+
+.md-typeset .md-button--secondary:hover {
+  background-color: var(--md-accent-fg-color--transparent);
+}
+
+/* ==========================================================================
+   Blockquotes
+   ========================================================================== */
+
+.md-typeset blockquote {
+  border-left: 4px solid var(--md-primary-fg-color);
+  background-color: var(--md-default-bg-color--light);
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.md-typeset blockquote p {
+  margin-bottom: 0;
+}
+
+/* ==========================================================================
+   Horizontal Rules
+   ========================================================================== */
+
+.md-typeset hr {
+  border: none;
+  border-top: 1px solid #e6e9f3;
+  margin: 2rem 0;
+}
+
+/* ==========================================================================
+   Lists
+   ========================================================================== */
+
+.md-typeset ul,
+.md-typeset ol {
+  margin-left: 0;
+  padding-left: 1.5rem;
+}
+
+.md-typeset li {
+  margin-bottom: 0.375rem;
+}
+
+.md-typeset li::marker {
+  color: var(--md-primary-fg-color);
+}
+
+/* ==========================================================================
+   Version Selector (if used)
+   ========================================================================== */
+
+.md-version {
+  font-size: 0.8125rem;
+}
+
+.md-version__current {
+  color: var(--md-default-fg-color);
+}
+
+/* ==========================================================================
+   Print Styles
+   ========================================================================== */
+
+@media print {
+  .md-header,
+  .md-tabs,
+  .md-sidebar,
+  .md-footer {
+    display: none;
+  }
+
+  .md-content {
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+
+.md-nav__link,
+.md-tabs__link,
+.md-typeset a,
+.md-button {
+  transition: all 0.2s ease;
+}
+
+/* ==========================================================================
+   Custom Badge Styles (for CLI commands)
+   ========================================================================== */
+
+.md-typeset .badge {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 0.25rem;
+  margin-left: 0.5rem;
+}
+
+.md-typeset .badge--required {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+}
+
+.md-typeset .badge--optional {
+  background-color: rgba(108, 119, 140, 0.1);
+  color: #6c778c;
+}
+
+.md-typeset .badge--deprecated {
+  background-color: rgba(255, 193, 7, 0.1);
+  color: #856404;
+}
+
+/* ==========================================================================
+   Scrollbar Styling
+   ========================================================================== */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--md-default-bg-color--light);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--md-default-fg-color--lightest);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--md-default-fg-color--lighter);
 }
