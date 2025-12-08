@@ -87,12 +87,13 @@ extra_css:
 
 nav:
   - Home: index.md
-  - Getting Started:
-    - getting-started/index.md
-    - Installation: getting-started/installation.md
-    - Install Script: getting-started/install-script.md
-    - Quick Start: getting-started/quickstart.md
-    - Authentication: getting-started/authentication.md
+  - Install:
+    - Install/index.md
+    - Homebrew: install/homebrew.md
+    - Scripted: install/script.md
+    - Source: install/source.md
+    - Shell Completions: install/completions.md
+    - Authentication: install/authentication.md
   - Commands:
     - commands/index.md
     - Configuration: commands/configuration.md
@@ -105,7 +106,7 @@ nav:
     - Global Flags: reference/global-flags.md
     - Environment Variables: reference/environment-variables.md
     - Resources: reference/resources.md
-  - Examples:
-    - examples/index.md
-    - Load Balancers: examples/load-balancer.md
-    - Cloud Sites: examples/cloud-sites.md
+  - Guides:
+    - guides/index.md
+    - Load Balancers: guides/load-balancer.md
+    - Cloud Sites: guides/cloud-sites.md
