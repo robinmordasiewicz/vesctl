@@ -133,9 +133,26 @@ func buildConfigCreateCmd() *cobra.Command {
 			continue
 		}
 		rtCopy := rt
+
+		// Build example text
+		exampleText := fmt.Sprintf(`# Create from file
+vesctl configuration create %s -i config.yaml`, rt.Name)
+
+		// Add inline JSON example if available
+		if jsonExample := types.GetResourceExample(rt.Name); jsonExample != "" {
+			exampleText += fmt.Sprintf(`
+
+# Create with inline JSON using heredoc
+vesctl configuration create %s --json-data "$(cat <<'EOF'
+%s
+EOF
+)"`, rt.Name, jsonExample)
+		}
+
 		subCmd := &cobra.Command{
-			Use:   rt.Name,
-			Short: fmt.Sprintf("Create %s", rt.Name),
+			Use:     rt.Name,
+			Short:   fmt.Sprintf("Create %s", rt.Name),
+			Example: exampleText,
 			RunE: func(cmd *cobra.Command, args []string) error {
 				return runConfigCreate(rtCopy, &flags)
 			},
@@ -200,9 +217,26 @@ func buildConfigReplaceCmd() *cobra.Command {
 			continue
 		}
 		rtCopy := rt
+
+		// Build example text
+		exampleText := fmt.Sprintf(`# Replace from file
+vesctl configuration replace %s -i config.yaml --yes`, rt.Name)
+
+		// Add inline JSON example if available
+		if jsonExample := types.GetResourceExample(rt.Name); jsonExample != "" {
+			exampleText += fmt.Sprintf(`
+
+# Replace with inline JSON using heredoc
+vesctl configuration replace %s --json-data "$(cat <<'EOF'
+%s
+EOF
+)" --yes`, rt.Name, jsonExample)
+		}
+
 		subCmd := &cobra.Command{
-			Use:   rt.Name,
-			Short: fmt.Sprintf("Replace %s", rt.Name),
+			Use:     rt.Name,
+			Short:   fmt.Sprintf("Replace %s", rt.Name),
+			Example: exampleText,
 			RunE: func(cmd *cobra.Command, args []string) error {
 				return runConfigReplace(rtCopy, &flags)
 			},
@@ -267,9 +301,26 @@ func buildConfigApplyCmd() *cobra.Command {
 			continue
 		}
 		rtCopy := rt
+
+		// Build example text
+		exampleText := fmt.Sprintf(`# Apply from file
+vesctl configuration apply %s -i config.yaml`, rt.Name)
+
+		// Add inline JSON example if available
+		if jsonExample := types.GetResourceExample(rt.Name); jsonExample != "" {
+			exampleText += fmt.Sprintf(`
+
+# Apply with inline JSON using heredoc
+vesctl configuration apply %s --json-data "$(cat <<'EOF'
+%s
+EOF
+)"`, rt.Name, jsonExample)
+		}
+
 		subCmd := &cobra.Command{
-			Use:   rt.Name,
-			Short: fmt.Sprintf("Apply %s", rt.Name),
+			Use:     rt.Name,
+			Short:   fmt.Sprintf("Apply %s", rt.Name),
+			Example: exampleText,
 			RunE: func(cmd *cobra.Command, args []string) error {
 				return runConfigApply(rtCopy, &flags)
 			},
