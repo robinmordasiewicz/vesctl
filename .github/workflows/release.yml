@@ -4,12 +4,6 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - "**.md"
-      - "docs/**"
-      - ".github/workflows/docs.yml"
-      - ".github/workflows/ci.yml"
-      - ".github/workflows/compatibility-tests.yml"
 
 permissions:
   contents: write
@@ -24,13 +18,25 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check for code changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            code:
+              - '**.go'
+              - 'go.mod'
+              - 'go.sum'
+
       - name: Set up Go
+        if: steps.changes.outputs.code == 'true'
         uses: actions/setup-go@v5
         with:
           go-version: "1.22"
           cache: true
 
       - name: Run tests
+        if: steps.changes.outputs.code == 'true'
         run: go test -v -race ./pkg/...
 
   semantic-release:
