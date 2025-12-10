@@ -112,6 +112,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: semantic-release
     if: needs.semantic-release.outputs.version != ''
+    outputs:
+      version: ${{ needs.semantic-release.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -132,3 +134,95 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+
+  sign-macos:
+    name: Sign macOS Binaries
+    runs-on: macos-latest
+    needs: goreleaser
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Import Code Signing Certificate
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          # Create temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          # Decode certificate
+          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > $RUNNER_TEMP/certificate.p12
+
+          # Create and configure keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # Import certificate
+          security import $RUNNER_TEMP/certificate.p12 -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+
+          # Clean up certificate file
+          rm $RUNNER_TEMP/certificate.p12
+
+      - name: Download and Sign macOS Binaries
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          VERSION="${{ needs.goreleaser.outputs.version }}"
+          echo "Signing version: $VERSION"
+
+          # Process each macOS architecture
+          for ARCH in amd64 arm64; do
+            ASSET_NAME="vesctl_${VERSION}_darwin_${ARCH}.tar.gz"
+            echo "Processing $ASSET_NAME..."
+
+            # Download release asset
+            gh release download "v${VERSION}" -p "$ASSET_NAME" -D $RUNNER_TEMP
+
+            # Extract
+            mkdir -p $RUNNER_TEMP/sign_${ARCH}
+            tar -xzf $RUNNER_TEMP/$ASSET_NAME -C $RUNNER_TEMP/sign_${ARCH}
+
+            # Sign the binary
+            BINARY_PATH="$RUNNER_TEMP/sign_${ARCH}/vesctl"
+            echo "Signing $BINARY_PATH..."
+
+            # Find the Developer ID Application certificate
+            SIGNING_IDENTITY=$(security find-identity -v -p codesigning | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+            echo "Using signing identity: $SIGNING_IDENTITY"
+
+            codesign --force --options runtime --sign "$SIGNING_IDENTITY" --timestamp "$BINARY_PATH"
+
+            # Verify signature
+            codesign --verify --verbose "$BINARY_PATH"
+
+            # Create ZIP for notarization
+            ZIP_PATH="$RUNNER_TEMP/vesctl_${ARCH}.zip"
+            ditto -c -k --keepParent "$BINARY_PATH" "$ZIP_PATH"
+
+            # Submit for notarization
+            echo "Submitting for notarization..."
+            xcrun notarytool submit "$ZIP_PATH" \
+              --apple-id "$APPLE_ID" \
+              --password "$APPLE_PASSWORD" \
+              --team-id "$APPLE_TEAM_ID" \
+              --wait
+
+            # Repackage as tar.gz (matching original format)
+            cd $RUNNER_TEMP/sign_${ARCH}
+            tar -czf $RUNNER_TEMP/${ASSET_NAME} vesctl
+            cd -
+
+            # Upload signed binary to release (replace unsigned)
+            echo "Uploading signed $ASSET_NAME..."
+            gh release upload "v${VERSION}" $RUNNER_TEMP/$ASSET_NAME --clobber
+          done
+
+          echo "macOS binaries signed and uploaded successfully!"
