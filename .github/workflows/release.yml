@@ -262,6 +262,31 @@ jobs:
 
           echo "macOS binaries signed and uploaded successfully!"
 
+      - name: Regenerate checksums.txt with signed binary hashes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ needs.goreleaser.outputs.version }}"
+          echo "Regenerating checksums.txt for version $VERSION..."
+
+          # Create working directory
+          mkdir -p $RUNNER_TEMP/checksums
+          cd $RUNNER_TEMP/checksums
+
+          # Download all release assets
+          echo "Downloading all release assets..."
+          GH_TOKEN="$GITHUB_TOKEN" gh release download "v${VERSION}" --repo "${{ github.repository }}"
+
+          # Generate new checksums.txt
+          echo "Computing SHA256 checksums..."
+          shasum -a 256 vesctl_${VERSION}_*.tar.gz vesctl_${VERSION}_*.zip 2>/dev/null | tee checksums.txt
+
+          # Upload new checksums.txt to replace the old one
+          echo "Uploading updated checksums.txt..."
+          GH_TOKEN="$GITHUB_TOKEN" gh release upload "v${VERSION}" checksums.txt --clobber --repo "${{ github.repository }}"
+
+          echo "checksums.txt regenerated successfully!"
+
       - name: Update Homebrew cask with signed binary hashes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
