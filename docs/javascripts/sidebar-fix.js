@@ -1,16 +1,16 @@
 /**
- * Fix for intermittent sidebar visibility with navigation.instant
+ * Navigation fixes for Material for MkDocs
  *
- * Material for MkDocs' instant loading can cause race conditions where
- * the data-md-page attribute doesn't update correctly during navigation.
- * This causes the home page CSS rule to incorrectly hide the sidebar.
+ * 1. Sidebar visibility fix: Ensures data-md-page attribute is correctly set
+ *    during navigation.instant mode to prevent sidebar visibility issues.
  *
- * This script ensures the data-md-page attribute is correctly set based on URL.
+ * 2. Active tab fix: Ensures the correct navigation tab is marked as active
+ *    based on the current URL path.
  */
 
 // Only set up once - check if already initialized
-if (!window.__sidebarFixInitialized) {
-  window.__sidebarFixInitialized = true;
+if (!window.__navigationFixInitialized) {
+  window.__navigationFixInitialized = true;
 
   function isHomePage(path) {
     return path.endsWith('/vesctl/') || path.endsWith('/vesctl/index.html') || path === '/';
@@ -30,15 +30,51 @@ if (!window.__sidebarFixInitialized) {
     }
   }
 
+  function fixActiveTab() {
+    var path = window.location.pathname;
+    var tabItems = document.querySelectorAll('.md-tabs__item');
+
+    tabItems.forEach(function(item) {
+      var tab = item.querySelector('.md-tabs__link');
+      if (!tab) return;
+
+      var href = tab.getAttribute('href');
+      if (!href) return;
+
+      // Normalize the href for comparison
+      var tabPath = href.replace(/^https?:\/\/[^\/]+/, '');
+
+      // Remove existing active class from parent li
+      item.classList.remove('md-tabs__item--active');
+
+      // Check if this tab matches the current path
+      // Match if the current path starts with the tab path (for section matching)
+      // But not for home page (exact match only)
+      var isHome = tabPath === '/vesctl/' || tabPath.endsWith('/vesctl/');
+      var pathMatches = isHome
+        ? isHomePage(path)
+        : path.startsWith(tabPath) && !isHomePage(path);
+
+      if (pathMatches) {
+        item.classList.add('md-tabs__item--active');
+      }
+    });
+  }
+
+  function applyFixes() {
+    fixSidebar();
+    fixActiveTab();
+  }
+
   // Run immediately
-  fixSidebar();
+  applyFixes();
 
   // Subscribe to Material for MkDocs navigation events
   // This is the key - document$ fires after each instant navigation
   if (typeof document$ !== 'undefined') {
-    document$.subscribe(fixSidebar);
+    document$.subscribe(applyFixes);
   }
 
   // Also handle browser back/forward
-  window.addEventListener('popstate', fixSidebar);
+  window.addEventListener('popstate', applyFixes);
 }
