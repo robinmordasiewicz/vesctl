@@ -142,6 +142,22 @@
   border-bottom: 1px solid #21262d;
 }
 
+/* Dark mode tab navigation - improve contrast */
+[data-md-color-scheme="slate"] .md-tabs__link {
+  color: #8b949e;  /* Light gray for inactive tabs */
+}
+
+[data-md-color-scheme="slate"] .md-tabs__link:hover {
+  color: #c9d1d9;  /* Brighter on hover */
+}
+
+[data-md-color-scheme="slate"] .md-tabs__item--active .md-tabs__link,
+[data-md-color-scheme="slate"] .md-tabs__item--active .md-tabs__link:focus,
+[data-md-color-scheme="slate"] .md-tabs__item--active .md-tabs__link:hover {
+  color: #58a6ff !important;  /* GitHub blue - high contrast */
+  border-bottom: 2px solid #58a6ff !important;
+}
+
 [data-md-color-scheme="slate"] .md-sidebar--primary {
   border-right: 1px solid #21262d;
 }
@@ -349,13 +365,18 @@ html {
   transition: color 0.2s ease;
 }
 
-.md-tabs__link:hover,
-.md-tabs__link--active {
+.md-tabs__link:hover {
   color: var(--md-primary-fg-color);
 }
 
-.md-tabs__link--active {
-  border-bottom: 2px solid var(--md-primary-fg-color);
+/* Active tab - ensure visibility with high contrast colors */
+/* Light mode styling - must have same specificity as dark mode */
+[data-md-color-scheme="default"] .md-tabs__item--active .md-tabs__link,
+[data-md-color-scheme="default"] .md-tabs__item--active .md-tabs__link:focus,
+[data-md-color-scheme="default"] .md-tabs__item--active .md-tabs__link:hover {
+  color: #2952cc !important;  /* Darker blue for better contrast on white */
+  border-bottom: 2px solid #2952cc !important;
+  opacity: 1 !important;
 }
 
 /* ==========================================================================
