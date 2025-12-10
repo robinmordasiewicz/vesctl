@@ -98,4 +98,4 @@ vesctl supports multiple output formats:
 
 ## Version
 
-Built from version: `v4.15.2-3-g3a4e3ba`
+Built from version: `v4.15.2`

@@ -12,6 +12,7 @@ Usage:
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -521,7 +522,7 @@ class VesctlDocsGenerator:
             keywords = ["vesctl", "F5 XC", "F5 Distributed Cloud"]
             keywords.extend(command.path)
             keywords.extend([p.replace("_", " ") for p in command.path])
-            fm["keywords"] = list(set(keywords))
+            fm["keywords"] = sorted(set(keywords))
 
             fm["command"] = command.full_command
             if len(command.path) >= 1:
@@ -546,12 +547,17 @@ class VesctlDocsGenerator:
             if child.command:
                 top_level.append(child.command)
 
+        # Sanitize version to remove commit-specific suffix for idempotent generation
+        # e.g., "v4.15.2-3-g3a4e3ba" -> "v4.15.2"
+        raw_version = self.spec.get("version", "dev")
+        version = re.sub(r'-\d+-g[a-f0-9]+(-dirty)?$', '', raw_version)
+
         content = template.render(
             title="Command Reference",
             description="Complete reference for all vesctl CLI commands",
             commands=top_level,
             global_flags=self.global_flags,
-            version=self.spec.get("version", "dev"),
+            version=version,
         )
 
         self.write_file(self.output_dir / "index.md", content)
