@@ -124,11 +124,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Skip if no recent release from workflow_run
+      - name: Log if no recent release from workflow_run
         if: github.event_name == 'workflow_run' && steps.check-release.outputs.recent_release != 'true'
         run: |
-          echo "::notice::Skipping documentation build - no recent release detected from Release workflow"
-          exit 0
+          echo "::notice::No recent release detected - will build docs with cached command docs (static changes only)"
 
       - name: Checkout
         if: github.event_name != 'workflow_run' || steps.check-release.outputs.recent_release == 'true'
@@ -428,10 +427,8 @@ jobs:
     name: Build Documentation
     runs-on: macos-latest
     needs: [check-spec, generate, build-windows-docs]
-    # Run unless: failed, cancelled, or workflow_run without recent release
-    if: |
-      always() && !failure() && !cancelled() &&
-      (github.event_name != 'workflow_run' || needs.check-spec.outputs.recent_release == 'true')
+    # Always run unless failed or cancelled - will use cached docs if generate was skipped
+    if: always() && !failure() && !cancelled()
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -650,6 +647,8 @@ jobs:
 
       - name: Wait for release assets to be available
         id: wait-assets
+        # Only wait for assets on release events or workflow_run with recent release
+        if: github.event_name == 'release' || (github.event_name != 'workflow_run') || needs.check-spec.outputs.recent_release == 'true'
         run: |
           # Get the latest release version
           LATEST_TAG=$(gh api repos/${{ github.repository }}/releases/latest --jq '.tag_name' 2>/dev/null || echo "")
@@ -697,6 +696,8 @@ jobs:
 
       - name: Test install script and capture output
         id: script-install
+        # Only test install script when release assets are available
+        if: steps.wait-assets.outputs.assets_ready == 'true' || github.event_name == 'release' || (github.event_name != 'workflow_run')
         run: |
           set +e  # Disable errexit to capture exit codes properly
 
@@ -768,6 +769,7 @@ jobs:
           echo "Successfully installed vesctl version: $VERSION"
 
       - name: Generate script docs with real output
+        if: steps.script-install.outputs.version != ''
         run: |
           python scripts/generate-script-docs.py \
             --version "${{ steps.script-install.outputs.version }}" \
