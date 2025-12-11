@@ -1222,7 +1222,7 @@ article.md-content__inner.md-typeset {
 
 /* Reduce search box width to give more space to source */
 .md-search {
-  max-width: 12rem;
+  max-width: 8rem;
 }
 
 /* GitHub repository header - single line layout */
