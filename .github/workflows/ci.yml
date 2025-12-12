@@ -96,7 +96,35 @@ jobs:
             git diff pkg/types/schemas_generated.go
             exit 1
           fi
-          echo "Schemas are up to date."
+          echo "✅ Schemas are up to date."
+
+      - name: Verify idempotency
+        run: |
+          echo "Running schema generation twice to verify idempotency..."
+          cp pkg/types/schemas_generated.go /tmp/schemas_first.go
+          go run scripts/generate-schemas.go 2>/dev/null
+          if ! diff -q pkg/types/schemas_generated.go /tmp/schemas_first.go > /dev/null; then
+            echo "::error::Schema generation is not idempotent!"
+            diff pkg/types/schemas_generated.go /tmp/schemas_first.go
+            exit 1
+          fi
+          echo "✅ Schema generation is idempotent"
+
+      - name: Validate critical resources
+        run: |
+          echo "Validating critical resources have schemas..."
+          CRITICAL_RESOURCES="http_loadbalancer tcp_loadbalancer origin_pool healthcheck app_firewall dns_zone"
+          MISSING=""
+          for resource in $CRITICAL_RESOURCES; do
+            if ! grep -q "\"$resource\":" pkg/types/schemas_generated.go; then
+              MISSING="$MISSING $resource"
+            fi
+          done
+          if [ -n "$MISSING" ]; then
+            echo "::error::Critical resources missing schemas:$MISSING"
+            exit 1
+          fi
+          echo "✅ All critical resources have schemas"
 
   build:
     name: Build
