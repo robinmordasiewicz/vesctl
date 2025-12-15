@@ -1,8 +1,5 @@
 {
   "branches": ["main"],
   "ci": true,
-  "provider": "github",
-  "changelog": {
-    "generator": "conventionalcommits"
-  }
+  "provider": "github"
 }
