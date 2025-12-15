@@ -22,14 +22,17 @@ import (
 )
 
 var (
-	specsDir   = flag.String("specs", "docs/specifications/api", "OpenAPI specs directory")
-	ollamaURL  = flag.String("ollama-url", "http://localhost:11434", "Ollama API URL")
-	model      = flag.String("model", "deepseek-r1:1.5b", "LLM model to use")
-	outputFile = flag.String("output", "pkg/types/descriptions_generated.json", "Output JSON file")
-	timeout    = flag.Duration("timeout", 60*time.Second, "Per-request timeout")
-	verbose    = flag.Bool("v", false, "Verbose output")
-	dryRun     = flag.Bool("dry-run", false, "Print what would be done without calling LLM")
-	workers    = flag.Int("workers", 8, "Number of parallel workers (default: 8)")
+	specsDir       = flag.String("specs", "docs/specifications/api", "OpenAPI specs directory")
+	ollamaURL      = flag.String("ollama-url", "http://localhost:11434", "Ollama API URL")
+	model          = flag.String("model", "deepseek-r1:1.5b", "LLM model to use")
+	outputFile     = flag.String("output", "pkg/types/descriptions_generated.json", "Output JSON file")
+	timeout        = flag.Duration("timeout", 120*time.Second, "Per-request timeout")
+	verbose        = flag.Bool("v", false, "Verbose output")
+	dryRun         = flag.Bool("dry-run", false, "Print what would be done without calling LLM")
+	workers        = flag.Int("workers", 8, "Number of parallel workers (default: 8)")
+	maxRetries     = flag.Int("max-retries", 3, "Maximum retries per request on timeout")
+	failThreshold  = flag.Float64("fail-threshold", 0.2, "Fail if error rate exceeds this (0.0-1.0)")
+	ciMode         = flag.Bool("ci", false, "CI mode: use GitHub Actions annotations for errors")
 )
 
 // DescriptionOutput is the JSON output format
@@ -101,17 +104,19 @@ func main() {
 	// Check Ollama availability (unless dry-run)
 	if !*dryRun {
 		if !checkOllamaAvailable() {
-			fmt.Fprintf(os.Stderr, "Error: Ollama not available at %s\n", *ollamaURL)
-			fmt.Fprintf(os.Stderr, "Start Ollama with: ollama serve\n")
+			logError("Ollama not available at %s", *ollamaURL)
+			logError("Start Ollama with: ollama serve")
+			logError("Or ensure Ollama is running before executing this script.")
 			os.Exit(1)
 		}
 
 		if !checkModelAvailable(*model) {
-			fmt.Fprintf(os.Stderr, "Error: Model %s not found\n", *model)
-			fmt.Fprintf(os.Stderr, "Install with: ollama pull %s\n", *model)
+			logError("Model %s not found", *model)
+			logError("Install with: ollama pull %s", *model)
 			os.Exit(1)
 		}
-		fmt.Printf("Using Ollama at %s with model %s (%d workers)\n", *ollamaURL, *model, *workers)
+		fmt.Printf("Using Ollama at %s with model %s (%d workers, timeout: %v, max-retries: %d)\n",
+			*ollamaURL, *model, *workers, *timeout, *maxRetries)
 	}
 
 	// Find all OpenAPI specs
@@ -188,9 +193,8 @@ func main() {
 	// Collect results
 	for result := range resultChan {
 		if result.err != nil {
-			if *verbose {
-				fmt.Printf("  Error [%s]: %v\n", result.resourceName, result.err)
-			}
+			// Always log errors (not just in verbose mode)
+			fmt.Fprintf(os.Stderr, "  Error [%s]: %v\n", result.resourceName, result.err)
 			errorsMu.Lock()
 			output.Errors = append(output.Errors, fmt.Sprintf("%s: %v", result.resourceName, result.err))
 			errorsMu.Unlock()
@@ -213,12 +217,12 @@ func main() {
 	// Write JSON output
 	jsonData, err := json.MarshalIndent(output, "", "  ")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to marshal JSON: %v\n", err)
+		logError("Failed to marshal JSON: %v", err)
 		os.Exit(1)
 	}
 
 	if err := os.WriteFile(*outputFile, jsonData, 0644); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to write output: %v\n", err)
+		logError("Failed to write output: %v", err)
 		os.Exit(1)
 	}
 
@@ -228,6 +232,40 @@ func main() {
 	if *verbose {
 		fmt.Println("\n--- Generated Descriptions ---")
 		fmt.Println(string(jsonData))
+	}
+
+	// Validate results and exit with appropriate code
+	exitCode := 0
+
+	// Check if no resources were processed (when not in dry-run mode)
+	if !*dryRun && processed == 0 {
+		logError("No resources were processed. Expected to process %d resources.", len(jobs))
+		logError("This usually indicates Ollama is not responding or the specs directory is wrong.")
+		exitCode = 1
+	}
+
+	// Check error rate against threshold
+	if len(jobs) > 0 {
+		errorRate := float64(len(output.Errors)) / float64(len(jobs))
+		if errorRate > *failThreshold {
+			logError("Error rate %.1f%% exceeds threshold %.1f%% (%d/%d resources failed)",
+				errorRate*100, *failThreshold*100, len(output.Errors), len(jobs))
+			for _, e := range output.Errors {
+				logError("  - %s", e)
+			}
+			exitCode = 1
+		} else if len(output.Errors) > 0 {
+			// Warn about errors even if under threshold
+			logWarning("%d resources had errors (%.1f%% error rate, threshold: %.1f%%)",
+				len(output.Errors), errorRate*100, *failThreshold*100)
+			for _, e := range output.Errors {
+				logWarning("  - %s", e)
+			}
+		}
+	}
+
+	if exitCode != 0 {
+		os.Exit(exitCode)
 	}
 }
 
@@ -352,7 +390,7 @@ Requirements:
 Output ONLY the corrected description text, nothing else. No explanations, no markdown, no quotes.`, resourceName, displayName, title, description)
 }
 
-// callOllama sends a request to the Ollama API
+// callOllama sends a request to the Ollama API with retry logic for timeouts
 func callOllama(prompt string) (string, error) {
 	reqBody := OllamaRequest{
 		Model:  *model,
@@ -369,26 +407,40 @@ func callOllama(prompt string) (string, error) {
 		return "", fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	client := &http.Client{Timeout: *timeout}
-	resp, err := client.Post(*ollamaURL+"/api/generate", "application/json", bytes.NewBuffer(jsonBody))
-	if err != nil {
-		return "", fmt.Errorf("ollama request failed: %w", err)
-	}
-	defer resp.Body.Close()
+	var lastErr error
+	for attempt := 1; attempt <= *maxRetries; attempt++ {
+		client := &http.Client{Timeout: *timeout}
+		resp, err := client.Post(*ollamaURL+"/api/generate", "application/json", bytes.NewBuffer(jsonBody))
+		if err != nil {
+			lastErr = fmt.Errorf("ollama request failed: %w", err)
+			if isTimeoutError(err) && attempt < *maxRetries {
+				if *verbose {
+					fmt.Printf("    Timeout on attempt %d/%d, retrying...\n", attempt, *maxRetries)
+				}
+				// Exponential backoff: 2s, 4s, 8s...
+				time.Sleep(time.Duration(1<<uint(attempt)) * time.Second)
+				continue
+			}
+			return "", lastErr
+		}
+		defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
-		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("ollama returned %d: %s", resp.StatusCode, string(body))
+		if resp.StatusCode != 200 {
+			body, _ := io.ReadAll(resp.Body)
+			return "", fmt.Errorf("ollama returned %d: %s", resp.StatusCode, string(body))
+		}
+
+		var result OllamaResponse
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return "", fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Clean up the response
+		cleaned := cleanResponse(result.Response)
+		return cleaned, nil
 	}
 
-	var result OllamaResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	// Clean up the response
-	cleaned := cleanResponse(result.Response)
-	return cleaned, nil
+	return "", lastErr
 }
 
 // cleanResponse removes common LLM artifacts from the response
@@ -488,4 +540,35 @@ func truncate(s string, maxLen int) string {
 		return s
 	}
 	return s[:maxLen-3] + "..."
+}
+
+// logError logs an error message, using GitHub Actions annotation format in CI mode
+func logError(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	if *ciMode {
+		fmt.Fprintf(os.Stderr, "::error::%s\n", msg)
+	} else {
+		fmt.Fprintf(os.Stderr, "Error: %s\n", msg)
+	}
+}
+
+// logWarning logs a warning message, using GitHub Actions annotation format in CI mode
+func logWarning(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	if *ciMode {
+		fmt.Fprintf(os.Stderr, "::warning::%s\n", msg)
+	} else {
+		fmt.Fprintf(os.Stderr, "Warning: %s\n", msg)
+	}
+}
+
+// isTimeoutError checks if an error is a timeout error
+func isTimeoutError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errStr := err.Error()
+	return strings.Contains(errStr, "context deadline exceeded") ||
+		strings.Contains(errStr, "Client.Timeout") ||
+		strings.Contains(errStr, "timeout")
 }

@@ -298,8 +298,13 @@ generate-schemas-strict:
 # Generate LLM descriptions (requires Ollama running with deepseek model)
 # This target fails if Ollama is not available - use for explicit regeneration
 # Override workers with: make generate-llm-descriptions LLM_WORKERS=4
+# Override timeout with: make generate-llm-descriptions LLM_TIMEOUT=180s
+LLM_TIMEOUT?=120s
+LLM_MAX_RETRIES?=3
+LLM_FAIL_THRESHOLD?=0.2
+
 generate-llm-descriptions:
-	@echo "Generating LLM-enhanced descriptions ($(LLM_WORKERS) workers)..."
+	@echo "Generating LLM-enhanced descriptions ($(LLM_WORKERS) workers, timeout: $(LLM_TIMEOUT))..."
 	@if ! curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then \
 		echo "Error: Ollama not running. Start with: ollama serve"; \
 		echo "Then pull the model: ollama pull deepseek-r1:1.5b"; \
@@ -309,6 +314,9 @@ generate-llm-descriptions:
 		-specs docs/specifications/api \
 		-output pkg/types/descriptions_generated.json \
 		-workers $(LLM_WORKERS) \
+		-timeout $(LLM_TIMEOUT) \
+		-max-retries $(LLM_MAX_RETRIES) \
+		-fail-threshold $(LLM_FAIL_THRESHOLD) \
 		-v
 	@echo "Descriptions written to pkg/types/descriptions_generated.json"
 
@@ -340,11 +348,14 @@ maybe-llm-descriptions:
 		echo ""; \
 		exit 1; \
 	fi
-	@echo "Ollama detected, regenerating LLM descriptions ($(LLM_WORKERS) workers)..."
+	@echo "Ollama detected, regenerating LLM descriptions ($(LLM_WORKERS) workers, timeout: $(LLM_TIMEOUT))..."
 	@go run scripts/generate-llm-descriptions.go \
 		-specs docs/specifications/api \
 		-output pkg/types/descriptions_generated.json \
 		-workers $(LLM_WORKERS) \
+		-timeout $(LLM_TIMEOUT) \
+		-max-retries $(LLM_MAX_RETRIES) \
+		-fail-threshold $(LLM_FAIL_THRESHOLD) \
 		-v
 	@go run scripts/generate-schemas.go -v -update-resources -use-llm-descriptions
 
