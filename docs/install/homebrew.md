@@ -7,7 +7,6 @@ brew tap robinmordasiewicz/tap
 brew install --cask f5xcctl
 ```
 
-
 **Upgrade to latest version:**
 
 ```bash
