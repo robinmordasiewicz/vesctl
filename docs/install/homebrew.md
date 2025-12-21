@@ -1,54 +1,90 @@
-# Homebrew
+# Homebrew (macOS/Linux)
 
-Install f5xcctl on macOS using Homebrew.
-
-## Installation
+Install f5xcctl on macOS or Linux using Homebrew:
 
 ```bash
-brew tap robinmordasiewicz/f5xcctl
+brew tap robinmordasiewicz/tap
 brew install --cask f5xcctl
 ```
 
-## Verify Installation
+
+**Upgrade to latest version:**
 
 ```bash
-f5xcctl version
-```
-
-## Update
-
-```bash
+brew update
 brew upgrade --cask f5xcctl
 ```
 
-## Uninstall
+**Uninstall:**
 
 ```bash
 brew uninstall --cask f5xcctl
 ```
 
-## What Gets Installed
+## Shell Completions
 
-- Binary at `/opt/homebrew/Caskroom/f5xcctl/{version}/f5xcctl`
-- Symlink at `/opt/homebrew/bin/f5xcctl`
-- Shell completions for bash, zsh, and fish
+The Homebrew cask includes shell completions for bash, zsh, and fish. These are installed automatically to Homebrew's managed directories.
 
-## Troubleshooting
+=== "Zsh"
 
-### Command Not Found
+    Completions should work automatically if you have Homebrew's shell environment configured. Ensure your `~/.zshrc` contains:
 
-If `f5xcctl` is not found after installation, ensure Homebrew's bin directory is in your PATH:
+    ```bash
+    eval "$(brew shellenv)"
+    ```
+
+    If you're using Oh My Zsh, completions are enabled by default. Otherwise, add to your `~/.zshrc`:
+
+    ```bash
+    autoload -Uz compinit && compinit
+    ```
+
+    Restart your terminal and test with `f5xcctl <TAB>`.
+
+=== "Bash"
+
+    Install bash-completion if you haven't already:
+
+    ```bash
+    brew install bash-completion@2
+    ```
+
+    Add to your `~/.bash_profile` or `~/.bashrc`:
+
+    ```bash
+    [[ -r "$(brew --prefix)/etc/profile.d/bash_completion.sh" ]] && \
+      . "$(brew --prefix)/etc/profile.d/bash_completion.sh"
+    ```
+
+    Restart your terminal and test with `f5xcctl <TAB>`.
+
+=== "Fish"
+
+    Completions work automatically if fish was installed via Homebrew.
+
+    Test with `f5xcctl <TAB>`.
+
+!!! tip "Troubleshooting Completions"
+    If completions don't work after setup:
+
+    1. Ensure you've restarted your terminal
+    2. For zsh, try running `rm -f ~/.zcompdump*` then restart
+    3. Verify completions are installed: `ls $(brew --prefix)/share/zsh/site-functions/_f5xcctl`
+
+## Verify Installation
+
+After installation, verify f5xcctl is working:
 
 ```bash
-export PATH="/opt/homebrew/bin:$PATH"
+f5xcctl version
 ```
 
-Add this to your shell profile (`~/.zshrc` or `~/.bashrc`) to make it permanent.
+Expected output:
 
-### Tap Not Found
-
-If the tap command fails, verify network connectivity and try:
-
-```bash
-brew tap robinmordasiewicz/f5xcctl --force-auto-update
+```text
+f5xcctl version 5.5.0
+  commit:   07f81eb
+  built:    2025-12-21T11:26:06Z
+  go:       go1.25.5
+  platform: darwin/arm64 [Possible values: linux/amd64,linux/arm64,darwin/amd64,darwin/arm64]
 ```

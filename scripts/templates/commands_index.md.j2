@@ -42,25 +42,25 @@ These flags are available for all commands:
 ### List resources
 
 ```bash
-f5xcctl configuration list namespace
+f5xcctl identity list namespace
 ```
 
 ### Get a specific resource
 
 ```bash
-f5xcctl configuration get namespace example-namespace
+f5xcctl identity get namespace example-namespace
 ```
 
 ### Create from file
 
 ```bash
-f5xcctl configuration create http_loadbalancer -i lb.yaml
+f5xcctl load_balancer create http_loadbalancer -i lb.yaml
 ```
 
 ### Delete a resource
 
 ```bash
-f5xcctl configuration delete http_loadbalancer example-lb -n example-namespace
+f5xcctl load_balancer delete http_loadbalancer example-lb -n example-namespace
 ```
 
 ## Output Formats
