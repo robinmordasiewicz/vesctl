@@ -11,7 +11,6 @@ Building from source requires:
 | Go | go1.25.5 | `go version` |
 | Git | any | `git --version` |
 
-
 ## Clone Repository
 
 ```bash
@@ -19,13 +18,11 @@ git clone https://github.com/robinmordasiewicz/f5xcctl.git
 cd f5xcctl
 ```
 
-
 ## Build
 
 ```bash
 go build -o f5xcctl .
 ```
-
 
 ## Verify Build
 
@@ -62,4 +59,3 @@ go build -ldflags="-X github.com/robinmordasiewicz/f5xcctl/cmd.Version=dev \
   -X github.com/robinmordasiewicz/f5xcctl/cmd.BuildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
   -o f5xcctl .
 ```
-
