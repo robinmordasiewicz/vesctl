@@ -146,7 +146,7 @@ func TestResource_ListServicePolicies(t *testing.T) {
 func TestResource_CRUD_HealthCheck(t *testing.T) {
 	c := getTestClient(t)
 
-	testName := fmt.Sprintf("test-healthcheck-%d", time.Now().Unix())
+	testName := fmt.Sprintf("example-healthcheck-%d", time.Now().Unix())
 	namespace := "shared"
 
 	// Create

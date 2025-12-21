@@ -457,8 +457,8 @@ func helpTemplateWithEnvVars() string {
 	// Add examples section
 	examplesSection := `
 Examples:
-  f5xcctl configuration list namespace                    List all namespaces
-  f5xcctl configuration get http_loadbalancer -n shared   Get a specific resource
+  f5xcctl identity list namespace                    List all namespaces
+  f5xcctl load_balancer get http_loadbalancer -n shared   Get a specific resource
   f5xcctl request /api/web/namespaces                     Execute custom API request
   f5xcctl --spec --output-format json                     Output CLI spec for automation
 `
