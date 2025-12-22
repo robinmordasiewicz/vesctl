@@ -18,10 +18,6 @@ DOCS_SITE_NAME := $(CLI_NAME) Documentation
 DOCS_SITE_URL := https://$(REPO_OWNER).github.io/$(CLI_NAME)/
 DOCS_REPO_URL := https://github.com/$(REPO_OWNER)/$(CLI_NAME)
 
-# Legacy names (for backward compatibility references in documentation)
-LEGACY_CLI_NAME := f5xcctl
-LEGACY_LEGACY_CLI_NAME := vesctl
-
 # Build artifacts
 BINARY_NAME := $(CLI_NAME)
 PROJECT_NAME := $(CLI_NAME)

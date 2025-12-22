@@ -21,10 +21,6 @@ const (
 
 	// EnvPrefix is the prefix for environment variables
 	EnvPrefix = "F5XC"
-
-	// Legacy names for backward compatibility documentation
-	LegacyCLIName       = "f5xcctl"
-	LegacyLegacyCLIName = "vesctl"
 )
 
 // RepoOwner returns the GitHub repository owner
