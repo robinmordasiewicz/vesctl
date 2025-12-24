@@ -147,14 +147,20 @@ fi
 
 log_info "Latest version: $VERSION"
 
-# Check if already downloaded
+# Check if already downloaded AND required files exist
+# Note: .specs/index.json and .specs/domains/ are gitignored, so they won't
+# exist after a fresh git clone even if .specs/.version exists
 if [ -f "$SPECS_DIR/.version" ]; then
     CURRENT_VERSION=$(cat "$SPECS_DIR/.version")
-    if [ "$CURRENT_VERSION" = "$VERSION" ]; then
+    if [ "$CURRENT_VERSION" = "$VERSION" ] && [ -f "$SPECS_DIR/index.json" ] && [ -d "$SPECS_DIR/domains" ]; then
         log_success "Specs already up to date ($VERSION)"
         exit 0
     fi
-    log_info "Updating from $CURRENT_VERSION to $VERSION"
+    if [ "$CURRENT_VERSION" != "$VERSION" ]; then
+        log_info "Updating from $CURRENT_VERSION to $VERSION"
+    else
+        log_info "Re-downloading specs (required files missing)"
+    fi
 fi
 
 # Find download URLs
