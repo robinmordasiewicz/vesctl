@@ -100,14 +100,14 @@ Run 'xcsh %s --help' for more information.`, info.DisplayName, info.Description,
 		// Check subscription tier before allowing access to domain
 		tierErr := ValidateDomainTier(c.Context(), domain)
 		if tierErr != nil {
-			fmt.Fprintf(c.OutOrStderr(), "Error: %v\n", tierErr)
+			_, _ = fmt.Fprintf(c.OutOrStderr(), "Error: %v\n", tierErr)
 			return tierErr
 		}
 
 		// Check for preview status and display warning if applicable (non-blocking)
 		previewWarning := CheckAndWarnPreviewDomain(domain)
 		if previewWarning != nil {
-			fmt.Fprintf(c.OutOrStderr(), "Warning: %v\n\n", previewWarning)
+			_, _ = fmt.Fprintf(c.OutOrStderr(), "Warning: %v\n\n", previewWarning)
 		}
 
 		// If tier check passed, proceed with normal command handling

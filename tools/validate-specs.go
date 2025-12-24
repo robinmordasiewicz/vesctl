@@ -132,7 +132,7 @@ func validateSpecs(index SpecIndex, verbose bool) []ValidationIssue {
 				Severity: "info",
 				Domain:   spec.Domain,
 				Issue:    "empty_domain",
-				Details:  fmt.Sprintf("No paths or schemas defined"),
+				Details:  "No paths or schemas defined",
 			})
 		}
 
@@ -152,7 +152,7 @@ func validateSpecs(index SpecIndex, verbose bool) []ValidationIssue {
 				Severity: "warning",
 				Domain:   spec.Domain,
 				Issue:    "invalid_domain_name",
-				Details:  fmt.Sprintf("Domain name doesn't follow snake_case convention"),
+				Details:  "Domain name doesn't follow snake_case convention",
 			})
 		}
 
@@ -177,7 +177,10 @@ func validateSpecs(index SpecIndex, verbose bool) []ValidationIssue {
 func isValidDomainName(domain string) bool {
 	// Check if domain follows snake_case pattern (lowercase letters, numbers, underscores)
 	for _, char := range domain {
-		if !((char >= 'a' && char <= 'z') || (char >= '0' && char <= '9') || char == '_') {
+		isLower := char >= 'a' && char <= 'z'
+		isDigit := char >= '0' && char <= '9'
+		isUnderscore := char == '_'
+		if !isLower && !isDigit && !isUnderscore {
 			return false
 		}
 	}

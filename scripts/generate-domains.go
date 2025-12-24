@@ -23,12 +23,19 @@ type SpecIndex struct {
 
 // SpecIndexEntry represents a single domain in index.json
 type SpecIndexEntry struct {
-	Domain      string `json:"domain"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	File        string `json:"file"`
-	PathCount   int    `json:"path_count"`
-	SchemaCount int    `json:"schema_count"`
+	Domain      string                 `json:"domain"`
+	Title       string                 `json:"title"`
+	Description string                 `json:"description"`
+	File        string                 `json:"file"`
+	PathCount   int                    `json:"path_count"`
+	SchemaCount int                    `json:"schema_count"`
+	Complexity     string                 `json:"complexity"`
+	IsPreview      bool                   `json:"is_preview"`
+	RequiresTier   string                 `json:"requires_tier"`
+	DomainCategory string                 `json:"domain_category"`
+	UseCases       []string               `json:"use_cases"`
+	RelatedDomains []string               `json:"related_domains"`
+	CLIMetadata    map[string]interface{} `json:"cli_metadata"`
 }
 
 // DomainConfig represents the structure of domain_config.yaml
@@ -63,6 +70,13 @@ type DomainInfo struct {
 	Deprecated     bool
 	MapsTo         string
 	AddedInVersion string
+	Complexity     string
+	IsPreview      bool
+	RequiresTier   string
+	Category       string
+	UseCases       []string
+	RelatedDomains []string
+	CLIMetadata    map[string]interface{}
 }
 
 // GeneratedDomainRegistry holds all domain info for template rendering
@@ -111,6 +125,13 @@ func main() {
 			Aliases:     config.Aliases[spec.Domain],
 			Deprecated:  false,
 			MapsTo:      "",
+			Complexity:     spec.Complexity,
+			IsPreview:      spec.IsPreview,
+			RequiresTier:   spec.RequiresTier,
+			Category:       spec.DomainCategory,
+			UseCases:       spec.UseCases,
+			RelatedDomains: spec.RelatedDomains,
+			CLIMetadata:    spec.CLIMetadata,
 		}
 
 		// Apply deprecated domain mappings
@@ -185,7 +206,9 @@ func generateDomainsFile(registry *GeneratedDomainRegistry) error {
 	if err != nil {
 		return fmt.Errorf("failed to create output file: %w", err)
 	}
-	defer outFile.Close()
+	defer func() {
+		_ = outFile.Close()
+	}()
 
 	// Sort domains for consistent output (idempotent generation)
 	sortedDomains := make(map[string]*DomainInfo)
