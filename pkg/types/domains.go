@@ -6,6 +6,15 @@ type DomainInfo struct {
 	DisplayName string   // Human: "Load Balancer"
 	Description string   // Functional description
 	Aliases     []string // Short forms: ["lb"]
+
+	// Fields from v1.0.43 upstream specs
+	Complexity     string                 // Complexity level: "simple", "moderate", "advanced"
+	IsPreview      bool                   // Whether this domain is in preview/beta
+	RequiresTier   string                 // Required subscription tier
+	Category       string                 // Domain category: "Security", "Platform", etc.
+	UseCases       []string               // Use cases for this domain
+	RelatedDomains []string               // Related domain names
+	CLIMetadata    map[string]interface{} // CLI-specific metadata (quick_start, workflows, etc.)
 }
 
 // DomainRegistry and AliasRegistry are auto-generated in domains_generated.go

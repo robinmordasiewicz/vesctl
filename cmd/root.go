@@ -13,6 +13,8 @@ import (
 	"github.com/robinmordasiewicz/xcsh/pkg/client"
 	"github.com/robinmordasiewicz/xcsh/pkg/config"
 	"github.com/robinmordasiewicz/xcsh/pkg/subscription"
+	"github.com/robinmordasiewicz/xcsh/pkg/types"
+	"github.com/robinmordasiewicz/xcsh/pkg/validation"
 )
 
 var (
@@ -575,4 +577,66 @@ func applyHelpTemplateRecursively(cmd *cobra.Command, template string) {
 	for _, subCmd := range cmd.Commands() {
 		applyHelpTemplateRecursively(subCmd, template)
 	}
+}
+
+
+// ValidateDomainTier checks if the current subscription tier is sufficient for the domain.
+// Returns nil if tier is sufficient, or a TierAccessError if access is denied.
+// Falls back to allowing access if tier cannot be determined (offline mode).
+func ValidateDomainTier(ctx context.Context, domain string) error {
+	// Get domain info
+	info, found := types.GetDomainInfo(domain)
+	if !found {
+		return fmt.Errorf("domain not found: %s", domain)
+	}
+
+	// Get current subscription tier
+	currentTier, err := EnsureSubscriptionTier(ctx)
+	if err != nil {
+		// If we can't determine tier, allow access (offline/fallback mode)
+		// User will see error from API when trying to actually access restricted domain
+		return nil
+	}
+
+	// Check if tier is sufficient
+	if !validation.IsSufficientTier(currentTier, info.RequiresTier) {
+		// Create and return a tier access error with user-friendly message
+		tierErr := validation.NewTierAccessError(
+			domain,
+			info.DisplayName,
+			currentTier,
+			info.RequiresTier,
+		)
+		return tierErr
+	}
+
+	return nil
+}
+
+// GetCurrentTierForDomain returns the current subscription tier for the user.
+// Falls back to "Standard" if tier cannot be determined.
+func GetCurrentTierForDomain(ctx context.Context) string {
+	tier, err := EnsureSubscriptionTier(ctx)
+	if err != nil {
+		return validation.TierStandard  // Default to Standard tier
+	}
+	return tier
+}
+
+// CheckAndWarnPreviewDomain checks if a domain is in preview and displays a warning if it is.
+// Returns a warning error if the domain is in preview, nil if the domain is stable.
+func CheckAndWarnPreviewDomain(domain string) *validation.PreviewWarning {
+	// Get domain info
+	info, found := types.GetDomainInfo(domain)
+	if !found {
+		return nil  // Domain not found, skip preview check
+	}
+
+	// Check if domain is in preview
+	if !info.IsPreview {
+		return nil  // Domain is stable, no warning needed
+	}
+
+	// Return preview warning
+	return validation.GetPreviewWarning(domain, info.DisplayName)
 }
