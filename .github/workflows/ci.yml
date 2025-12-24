@@ -237,7 +237,7 @@ jobs:
         id: validate
         run: |
           echo "🔍 Running spec quality validation..."
-          go run scripts/validate-specs.go --report > /tmp/validation-report.json
+          go run tools/validate-specs.go --report > /tmp/validation-report.json
           ISSUES=$(jq '.summary.total_issues // 0' /tmp/validation-report.json)
           CRITICAL=$(jq '.summary.critical_issues // 0' /tmp/validation-report.json)
           echo "Found $ISSUES total issues ($CRITICAL critical)"
