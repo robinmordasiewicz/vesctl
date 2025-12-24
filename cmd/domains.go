@@ -52,10 +52,22 @@ func buildDomainCmd(domain string) *cobra.Command {
 		useCasesInfo = validation.FormatUseCases(info.UseCases) + "\n"
 	}
 
+	relatedDomainsInfo := ""
+	relatedDomains := validation.GetRelatedDomains(domain)
+	if len(relatedDomains) > 0 {
+		relatedDomainsInfo = validation.FormatRelatedDomains(relatedDomains) + "\n"
+	}
+
+	workflowInfo := ""
+	workflows := validation.GetWorkflowSuggestions(domain)
+	if len(workflows) > 0 {
+		workflowInfo = validation.FormatWorkflowSuggestions(workflows) + "\n"
+	}
+
 	longDesc := fmt.Sprintf(`Manage F5 Distributed Cloud %s resources.
 
 %s
-%s%s%s
+%s%s%s%s%s
 OPERATIONS:
   list           List resources of a type (optionally filtered by namespace)
   get            Retrieve a specific resource by name
@@ -68,7 +80,7 @@ OPERATIONS:
   add-labels     Add labels to a resource
   remove-labels  Remove labels from a resource
 
-Run 'xcsh %s --help' for more information.`, info.DisplayName, info.Description, categoryInfo, complexityInfo, useCasesInfo, domain)
+Run 'xcsh %s --help' for more information.`, info.DisplayName, info.Description, categoryInfo, complexityInfo, useCasesInfo, relatedDomainsInfo, workflowInfo, domain)
 
 	// Prepend preview warning if domain is in preview
 	if info.IsPreview {
