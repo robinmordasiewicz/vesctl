@@ -17,18 +17,16 @@ type REPLSession struct {
 	lastExitCode int
 
 	// Contextual navigation state
-	contextPath  *ContextPath      // Current navigation context
-	tenant       string            // Extracted tenant name from API URL
-	validator    *ContextValidator // Domain/action validator
-	colorEnabled bool              // Whether terminal supports colors
+	contextPath *ContextPath      // Current navigation context
+	tenant      string            // Extracted tenant name from API URL
+	validator   *ContextValidator // Domain/action validator
 }
 
 // initREPLSession creates a new REPL session with initialized state
 func initREPLSession() (*REPLSession, error) {
 	session := &REPLSession{
-		namespace:    "",
-		contextPath:  &ContextPath{},
-		colorEnabled: detectColorSupport(),
+		namespace:   "",
+		contextPath: &ContextPath{},
 	}
 
 	// Extract tenant from server URL if available
@@ -129,11 +127,6 @@ func (s *REPLSession) GetContextPath() *ContextPath {
 // GetTenant returns the current tenant name
 func (s *REPLSession) GetTenant() string {
 	return s.tenant
-}
-
-// IsColorEnabled returns whether color output is supported
-func (s *REPLSession) IsColorEnabled() bool {
-	return s.colorEnabled
 }
 
 // GetValidator returns the context validator

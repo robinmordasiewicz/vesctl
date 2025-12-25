@@ -52,7 +52,6 @@ func StartREPL() error {
 		prompt.OptionPrefix(buildPrompt(session)),
 		prompt.OptionLivePrefix(session.livePrefix),
 		prompt.OptionHistory(session.history.GetHistory()),
-		prompt.OptionPrefixTextColor(prompt.Cyan),
 		prompt.OptionPreviewSuggestionTextColor(prompt.Blue),
 		prompt.OptionSelectedSuggestionBGColor(prompt.LightGray),
 		prompt.OptionSuggestionBGColor(prompt.DarkGray),
@@ -82,9 +81,8 @@ Tab completion is available for commands and arguments.
 }
 
 // buildPrompt constructs the prompt string based on session state
-// Delegates to the colored prompt builder for rich contextual display
 func buildPrompt(session *REPLSession) string {
-	return buildColoredPrompt(session)
+	return buildPlainPrompt(session)
 }
 
 // handleExit performs cleanup and exits the REPL
