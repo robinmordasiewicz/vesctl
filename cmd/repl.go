@@ -9,6 +9,11 @@ import (
 	"github.com/robinmordasiewicz/xcsh/pkg/branding"
 )
 
+// printWelcomeBanner displays the modern welcome banner when entering REPL mode
+func printWelcomeBanner() {
+	fmt.Print(renderWelcomeBanner())
+}
+
 // shouldEnterREPL determines if the CLI should enter interactive REPL mode
 func shouldEnterREPL() bool {
 	// No subcommand provided
@@ -66,18 +71,6 @@ func StartREPL() error {
 	p.Run()
 
 	return nil
-}
-
-// printWelcomeBanner displays the welcome message when entering REPL mode
-func printWelcomeBanner() {
-	fmt.Printf(`
-%s - Interactive Mode
-Version: %s
-
-Type 'help' for available commands, 'exit' or Ctrl+D to quit.
-Tab completion is available for commands and arguments.
-
-`, branding.CLIFullName, Version)
 }
 
 // buildPrompt constructs the prompt string based on session state
