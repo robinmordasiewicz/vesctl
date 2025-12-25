@@ -3,15 +3,10 @@ package cmd
 import (
 	"fmt"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/robinmordasiewicz/xcsh/pkg/branding"
 	"github.com/robinmordasiewicz/xcsh/pkg/client"
 )
-
-// logoDisplayWidth is the visual width of the F5 logo in terminal columns
-// The circular logo is 21 characters wide
-const logoDisplayWidth = 21
 
 // renderWelcomeBanner creates the modern CLI welcome banner with F5 logo
 func renderWelcomeBanner() string {
@@ -20,52 +15,85 @@ func renderWelcomeBanner() string {
 	// Add leading newline for visual separation
 	sb.WriteString("\n")
 
-	// Get logo lines
+	// Display the F5 logo with two colors:
+	// - Red for the circle background (▓ characters)
+	// - Bold white for the F5 text (█ characters)
 	logoLines := strings.Split(branding.F5Logo, "\n")
+	for _, line := range logoLines {
+		coloredLine := colorizeLogoLine(line)
+		sb.WriteString(coloredLine + "\n")
+	}
 
-	// Build info lines to display next to logo
+	// Add spacing after logo
+	sb.WriteString("\n")
+
+	// Display info lines in bold white
 	infoLines := []string{
 		fmt.Sprintf("%s v%s", branding.CLIFullName, Version),
 		buildConnectionInfo(),
 		"",
 		"Type 'help' for commands, 'exit' or Ctrl+D to quit.",
 		"Tab completion available.",
-		"",
-		"",
 	}
 
-	// Combine logo and info side by side with colors
-	for i := 0; i < maxInt(len(logoLines), len(infoLines)); i++ {
-		logoLine := ""
-		if i < len(logoLines) {
-			logoLine = logoLines[i]
-		}
-
-		infoLine := ""
-		if i < len(infoLines) {
-			infoLine = infoLines[i]
-		}
-
-		// Pad logo line to consistent visual width
-		// Use rune count for proper Unicode handling
-		runeCount := utf8.RuneCountInString(logoLine)
-		padding := logoDisplayWidth - runeCount
-		if padding < 0 {
-			padding = 0
-		}
-		paddedLogo := logoLine + strings.Repeat(" ", padding)
-
-		// Apply colors: red for logo, bold white for info
-		coloredLogo := branding.ColorRed + paddedLogo + branding.ColorReset
-		coloredInfo := branding.ColorBoldWhite + infoLine + branding.ColorReset
-
-		sb.WriteString(fmt.Sprintf("%s   %s\n", coloredLogo, coloredInfo))
+	for _, line := range infoLines {
+		sb.WriteString(branding.ColorBoldWhite + line + branding.ColorReset + "\n")
 	}
 
 	// Add separator line in red
 	sb.WriteString(branding.ColorRed + strings.Repeat("─", 80) + branding.ColorReset + "\n")
 
 	return sb.String()
+}
+
+// colorizeLogoLine applies red color to shading characters and white color to █ characters
+// The logo uses ▓, ▒, ░ for the red circle with gradient shading preserved
+func colorizeLogoLine(line string) string {
+	var result strings.Builder
+	inRed := false
+	inWhite := false
+
+	for _, r := range line {
+		switch r {
+		case '▓', '░', '▒':
+			// Red for circle background - preserve gradient shading
+			if !inRed {
+				if inWhite {
+					result.WriteString(branding.ColorReset)
+					inWhite = false
+				}
+				result.WriteString(branding.ColorRed)
+				inRed = true
+			}
+			result.WriteRune(r) // Keep original shading character for gradient effect
+		case '█':
+			// White for accent elements
+			if !inWhite {
+				if inRed {
+					result.WriteString(branding.ColorReset)
+					inRed = false
+				}
+				result.WriteString(branding.ColorBoldWhite)
+				inWhite = true
+			}
+			result.WriteRune(r)
+		default:
+			// Reset for spaces and other characters
+			if inRed || inWhite {
+				result.WriteString(branding.ColorReset)
+				inRed = false
+				inWhite = false
+			}
+			result.WriteRune(r)
+		}
+	}
+
+	// Final reset if we ended in a color
+	if inRed || inWhite {
+		result.WriteString(branding.ColorReset)
+	}
+
+	return result.String()
 }
 
 // buildConnectionInfo returns tenant and API info string
@@ -89,12 +117,4 @@ func extractDomain(url string) string {
 	// Remove trailing slashes
 	url = strings.TrimSuffix(url, "/")
 	return url
-}
-
-// maxInt returns the larger of two integers
-func maxInt(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }
