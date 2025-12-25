@@ -46,8 +46,11 @@ func renderWelcomeBanner() string {
 	return sb.String()
 }
 
-// colorizeLogoLine applies red color to shading characters and white color to █ characters
-// The logo uses ▓, ▒, ░ for the red circle with gradient shading preserved
+// colorizeLogoLine applies red color to circle background and white color to F5 text
+// The logo uses:
+// - ▓ for the red circle background
+// - █ and ▒ for the white F5 text
+// - ( and ) for the circle outline (rendered in red)
 func colorizeLogoLine(line string) string {
 	var result strings.Builder
 	inRed := false
@@ -55,8 +58,8 @@ func colorizeLogoLine(line string) string {
 
 	for _, r := range line {
 		switch r {
-		case '▓', '░', '▒':
-			// Red for circle background - preserve gradient shading
+		case '▓', '(', ')':
+			// Red for circle background and outline
 			if !inRed {
 				if inWhite {
 					result.WriteString(branding.ColorReset)
@@ -65,9 +68,9 @@ func colorizeLogoLine(line string) string {
 				result.WriteString(branding.ColorRed)
 				inRed = true
 			}
-			result.WriteRune(r) // Keep original shading character for gradient effect
-		case '█':
-			// White for accent elements
+			result.WriteRune(r)
+		case '█', '▒':
+			// White for F5 text elements
 			if !inWhite {
 				if inRed {
 					result.WriteString(branding.ColorReset)
