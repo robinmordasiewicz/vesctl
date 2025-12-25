@@ -54,9 +54,9 @@ const (
          (▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓)`
 
 	// ANSI color codes for terminal output
-	ColorRed       = "\033[91m"   // Bright red
-	ColorBoldWhite = "\033[1;97m" // Bold bright white
-	ColorReset     = "\033[0m"    // Reset to default
+	ColorRed       = "\033[38;2;203;36;49m" // GitHub diff red (#cb2431)
+	ColorBoldWhite = "\033[1;97m"           // Bold bright white
+	ColorReset     = "\033[0m"              // Reset to default
 
 	// CLIFullName is the full descriptive name
 	CLIFullName = "F5 Distributed Cloud Shell"

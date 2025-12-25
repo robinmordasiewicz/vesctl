@@ -68,7 +68,11 @@ func colorizeLogoLine(line string) string {
 				result.WriteString(branding.ColorRed)
 				inRed = true
 			}
-			result.WriteRune(r)
+			if r == '▓' {
+				result.WriteRune('█') // Render as solid block
+			} else {
+				result.WriteRune(r)
+			}
 		case '█', '▒':
 			// White for F5 text elements
 			if !inWhite {
