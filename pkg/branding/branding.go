@@ -7,6 +7,27 @@ const (
 	// CLIName is the current name of the CLI tool
 	CLIName = "xcsh"
 
+	// F5Logo is the ASCII art logo with circular frame
+	// Used in the interactive REPL welcome banner
+	// Designed to evoke the F5 red circle logo
+	F5Logo = `       ●●●●●●●●
+     ●●        ●●
+   ●●            ●●
+  ●    ███  ███    ●
+  ●    █    █      ●
+ ●     ██   ███     ●
+ ●     █       █    ●
+  ●    █    ███    ●
+  ●                ●
+   ●●            ●●
+     ●●        ●●
+       ●●●●●●●●`
+
+	// ANSI color codes for terminal output
+	ColorRed       = "\033[91m"   // Bright red (like GitHub diff removed)
+	ColorBoldWhite = "\033[1;97m" // Bold bright white
+	ColorReset     = "\033[0m"    // Reset to default
+
 	// CLIFullName is the full descriptive name
 	CLIFullName = "F5 Distributed Cloud Shell"
 
