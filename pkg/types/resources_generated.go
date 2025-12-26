@@ -240,34 +240,34 @@ func registerGeneratedResources() {
 	Register(&ResourceType{
 		Name:              "aws_tgw_site",
 		CLIName:           "aws-tgw-site",
-		Description:       "F5 Distributed Cloud Site Management API specifications",
+		Description:       "F5 Distributed Cloud Sites API specifications",
 		APIPath:           "/api/config/namespaces/{namespace}/aws_tgw_sites",
 		SupportsNamespace: true,
 		Operations:        AllOperations(),
-		PrimaryDomain:     "site_management",
-		Domains:           []string{"site_management"},
+		PrimaryDomain:     "sites",
+		Domains:           []string{"sites"},
 	})
 
 	Register(&ResourceType{
 		Name:              "aws_vpc_site",
 		CLIName:           "aws-vpc-site",
-		Description:       "F5 Distributed Cloud Site Management API specifications",
+		Description:       "F5 Distributed Cloud Sites API specifications",
 		APIPath:           "/api/config/namespaces/{namespace}/aws_vpc_sites",
 		SupportsNamespace: true,
 		Operations:        AllOperations(),
-		PrimaryDomain:     "site_management",
-		Domains:           []string{"site_management"},
+		PrimaryDomain:     "sites",
+		Domains:           []string{"sites"},
 	})
 
 	Register(&ResourceType{
 		Name:              "azure_vnet_site",
 		CLIName:           "azure-vnet-site",
-		Description:       "F5 Distributed Cloud Site Management API specifications",
+		Description:       "F5 Distributed Cloud Sites API specifications",
 		APIPath:           "/api/config/namespaces/{namespace}/azure_vnet_sites",
 		SupportsNamespace: true,
 		Operations:        AllOperations(),
-		PrimaryDomain:     "site_management",
-		Domains:           []string{"site_management"},
+		PrimaryDomain:     "sites",
+		Domains:           []string{"sites"},
 	})
 
 	Register(&ResourceType{
@@ -605,12 +605,12 @@ func registerGeneratedResources() {
 	Register(&ResourceType{
 		Name:              "discovery",
 		CLIName:           "discovery",
-		Description:       "F5 Distributed Cloud Service Mesh API specifications",
+		Description:       "F5 Distributed Cloud Api API specifications",
 		APIPath:           "/api/config/namespaces/{namespace}/discoverys",
 		SupportsNamespace: true,
 		Operations:        AllOperations(),
-		PrimaryDomain:     "service_mesh",
-		Domains:           []string{"service_mesh"},
+		PrimaryDomain:     "api",
+		Domains:           []string{"api"},
 	})
 
 	Register(&ResourceType{
@@ -766,12 +766,12 @@ func registerGeneratedResources() {
 	Register(&ResourceType{
 		Name:              "fleet",
 		CLIName:           "fleet",
-		Description:       "F5 Distributed Cloud Service Mesh API specifications",
+		Description:       "F5 Distributed Cloud Ce Management API specifications",
 		APIPath:           "/api/config/namespaces/{namespace}/fleets",
 		SupportsNamespace: true,
 		Operations:        AllOperations(),
-		PrimaryDomain:     "service_mesh",
-		Domains:           []string{"service_mesh"},
+		PrimaryDomain:     "ce_management",
+		Domains:           []string{"ce_management"},
 	})
 
 	Register(&ResourceType{
@@ -817,12 +817,12 @@ func registerGeneratedResources() {
 	Register(&ResourceType{
 		Name:              "gcp_vpc_site",
 		CLIName:           "gcp-vpc-site",
-		Description:       "F5 Distributed Cloud Site Management API specifications",
+		Description:       "F5 Distributed Cloud Sites API specifications",
 		APIPath:           "/api/config/namespaces/{namespace}/gcp_vpc_sites",
 		SupportsNamespace: true,
 		Operations:        AllOperations(),
-		PrimaryDomain:     "site_management",
-		Domains:           []string{"site_management"},
+		PrimaryDomain:     "sites",
+		Domains:           []string{"sites"},
 	})
 
 	Register(&ResourceType{
@@ -1085,34 +1085,34 @@ func registerGeneratedResources() {
 	Register(&ResourceType{
 		Name:              "k8s_cluster",
 		CLIName:           "k8s-cluster",
-		Description:       "F5 Distributed Cloud Site Management API specifications",
+		Description:       "F5 Distributed Cloud Sites API specifications",
 		APIPath:           "/api/config/namespaces/{namespace}/k8s_clusters",
 		SupportsNamespace: true,
 		Operations:        AllOperations(),
-		PrimaryDomain:     "site_management",
-		Domains:           []string{"site_management"},
+		PrimaryDomain:     "sites",
+		Domains:           []string{"sites"},
 	})
 
 	Register(&ResourceType{
 		Name:              "k8s_cluster_role",
 		CLIName:           "k8s-cluster-role",
-		Description:       "F5 Distributed Cloud Site Management API specifications",
+		Description:       "F5 Distributed Cloud Sites API specifications",
 		APIPath:           "/api/config/namespaces/{namespace}/k8s_cluster_roles",
 		SupportsNamespace: true,
 		Operations:        AllOperations(),
-		PrimaryDomain:     "site_management",
-		Domains:           []string{"site_management"},
+		PrimaryDomain:     "sites",
+		Domains:           []string{"sites"},
 	})
 
 	Register(&ResourceType{
 		Name:              "k8s_cluster_role_binding",
 		CLIName:           "k8s-cluster-role-binding",
-		Description:       "F5 Distributed Cloud Site Management API specifications",
+		Description:       "F5 Distributed Cloud Sites API specifications",
 		APIPath:           "/api/config/namespaces/{namespace}/k8s_cluster_role_bindings",
 		SupportsNamespace: true,
 		Operations:        AllOperations(),
-		PrimaryDomain:     "site_management",
-		Domains:           []string{"site_management"},
+		PrimaryDomain:     "sites",
+		Domains:           []string{"sites"},
 	})
 
 	Register(&ResourceType{
@@ -1764,12 +1764,12 @@ func registerGeneratedResources() {
 	Register(&ResourceType{
 		Name:              "secret_management_access",
 		CLIName:           "secret-management-access",
-		Description:       "F5 Distributed Cloud Secops And Incident Response API specifications",
+		Description:       "F5 Distributed Cloud Blindfold API specifications",
 		APIPath:           "/api/config/namespaces/{namespace}/secret_management_accesss",
 		SupportsNamespace: true,
 		Operations:        AllOperations(),
-		PrimaryDomain:     "secops_and_incident_response",
-		Domains:           []string{"secops_and_incident_response"},
+		PrimaryDomain:     "blindfold",
+		Domains:           []string{"blindfold"},
 	})
 
 	Register(&ResourceType{
@@ -1797,23 +1797,23 @@ func registerGeneratedResources() {
 	Register(&ResourceType{
 		Name:              "securemesh_site",
 		CLIName:           "securemesh-site",
-		Description:       "F5 Distributed Cloud Site Management API specifications",
+		Description:       "F5 Distributed Cloud Sites API specifications",
 		APIPath:           "/api/config/namespaces/{namespace}/securemesh_sites",
 		SupportsNamespace: true,
 		Operations:        AllOperations(),
-		PrimaryDomain:     "site_management",
-		Domains:           []string{"site_management"},
+		PrimaryDomain:     "sites",
+		Domains:           []string{"sites"},
 	})
 
 	Register(&ResourceType{
 		Name:              "securemesh_site_v2",
 		CLIName:           "securemesh-site-v2",
-		Description:       "F5 Distributed Cloud Site Management API specifications",
+		Description:       "F5 Distributed Cloud Sites API specifications",
 		APIPath:           "/api/config/namespaces/{namespace}/securemesh_site_v2s",
 		SupportsNamespace: true,
 		Operations:        AllOperations(),
-		PrimaryDomain:     "site_management",
-		Domains:           []string{"site_management"},
+		PrimaryDomain:     "sites",
+		Domains:           []string{"sites"},
 	})
 
 	Register(&ResourceType{
@@ -2361,34 +2361,34 @@ func registerGeneratedResources() {
 	Register(&ResourceType{
 		Name:              "tpm_api_key",
 		CLIName:           "tpm-api-key",
-		Description:       "F5 Distributed Cloud Marketplace API specifications",
+		Description:       "F5 Distributed Cloud Bot And Threat Defense API specifications",
 		APIPath:           "/api/config/namespaces/{namespace}/tpm_api_keys",
 		SupportsNamespace: true,
 		Operations:        ResourceOperations{Create: true, Get: true, List: true, Update: true, Delete: false, Status: false},
-		PrimaryDomain:     "marketplace",
-		Domains:           []string{"marketplace"},
+		PrimaryDomain:     "bot_and_threat_defense",
+		Domains:           []string{"bot_and_threat_defense"},
 	})
 
 	Register(&ResourceType{
 		Name:              "tpm_category",
 		CLIName:           "tpm-category",
-		Description:       "F5 Distributed Cloud Marketplace API specifications",
+		Description:       "F5 Distributed Cloud Bot And Threat Defense API specifications",
 		APIPath:           "/api/config/namespaces/{namespace}/tpm_categorys",
 		SupportsNamespace: true,
 		Operations:        ResourceOperations{Create: true, Get: true, List: true, Update: true, Delete: false, Status: false},
-		PrimaryDomain:     "marketplace",
-		Domains:           []string{"marketplace"},
+		PrimaryDomain:     "bot_and_threat_defense",
+		Domains:           []string{"bot_and_threat_defense"},
 	})
 
 	Register(&ResourceType{
 		Name:              "tpm_manager",
 		CLIName:           "tpm-manager",
-		Description:       "F5 Distributed Cloud Marketplace API specifications",
+		Description:       "F5 Distributed Cloud Bot And Threat Defense API specifications",
 		APIPath:           "/api/config/namespaces/{namespace}/tpm_managers",
 		SupportsNamespace: true,
 		Operations:        ResourceOperations{Create: true, Get: true, List: true, Update: false, Delete: false, Status: false},
-		PrimaryDomain:     "marketplace",
-		Domains:           []string{"marketplace"},
+		PrimaryDomain:     "bot_and_threat_defense",
+		Domains:           []string{"bot_and_threat_defense"},
 	})
 
 	Register(&ResourceType{
@@ -2557,12 +2557,12 @@ func registerGeneratedResources() {
 	Register(&ResourceType{
 		Name:              "virtual_host",
 		CLIName:           "virtual-host",
-		Description:       "F5 Distributed Cloud Service Mesh API specifications",
+		Description:       "F5 Distributed Cloud Virtual API specifications",
 		APIPath:           "/api/config/namespaces/{namespace}/virtual_hosts",
 		SupportsNamespace: true,
 		Operations:        AllOperations(),
-		PrimaryDomain:     "service_mesh",
-		Domains:           []string{"service_mesh"},
+		PrimaryDomain:     "virtual",
+		Domains:           []string{"virtual"},
 	})
 
 	Register(&ResourceType{
@@ -2573,29 +2573,29 @@ func registerGeneratedResources() {
 		SupportsNamespace: true,
 		Operations:        AllOperations(),
 		PrimaryDomain:     "kubernetes_and_orchestration",
-		Domains:           []string{"kubernetes_and_orchestration", "site"},
+		Domains:           []string{"kubernetes_and_orchestration", "sites"},
 	})
 
 	Register(&ResourceType{
 		Name:              "virtual_network",
 		CLIName:           "virtual-network",
-		Description:       "F5 Distributed Cloud Service Mesh API specifications",
+		Description:       "F5 Distributed Cloud Network API specifications",
 		APIPath:           "/api/config/namespaces/{namespace}/virtual_networks",
 		SupportsNamespace: true,
 		Operations:        AllOperations(),
-		PrimaryDomain:     "service_mesh",
-		Domains:           []string{"service_mesh"},
+		PrimaryDomain:     "network",
+		Domains:           []string{"network", "service_mesh"},
 	})
 
 	Register(&ResourceType{
 		Name:              "virtual_site",
 		CLIName:           "virtual-site",
-		Description:       "F5 Distributed Cloud Site Management API specifications",
+		Description:       "F5 Distributed Cloud Sites API specifications",
 		APIPath:           "/api/config/namespaces/{namespace}/virtual_sites",
 		SupportsNamespace: true,
 		Operations:        AllOperations(),
-		PrimaryDomain:     "site_management",
-		Domains:           []string{"site_management"},
+		PrimaryDomain:     "sites",
+		Domains:           []string{"sites"},
 	})
 
 	Register(&ResourceType{
@@ -2610,23 +2610,23 @@ func registerGeneratedResources() {
 	Register(&ResourceType{
 		Name:              "voltshare_admin_policy",
 		CLIName:           "voltshare-admin-policy",
-		Description:       "F5 Distributed Cloud Marketplace API specifications",
+		Description:       "F5 Distributed Cloud Blindfold API specifications",
 		APIPath:           "/api/config/namespaces/{namespace}/voltshare_admin_policys",
 		SupportsNamespace: true,
 		Operations:        AllOperations(),
-		PrimaryDomain:     "marketplace",
-		Domains:           []string{"marketplace"},
+		PrimaryDomain:     "blindfold",
+		Domains:           []string{"blindfold"},
 	})
 
 	Register(&ResourceType{
 		Name:              "voltstack_site",
 		CLIName:           "voltstack-site",
-		Description:       "F5 Distributed Cloud Site Management API specifications",
+		Description:       "F5 Distributed Cloud Sites API specifications",
 		APIPath:           "/api/config/namespaces/{namespace}/voltstack_sites",
 		SupportsNamespace: true,
 		Operations:        AllOperations(),
-		PrimaryDomain:     "site_management",
-		Domains:           []string{"site_management"},
+		PrimaryDomain:     "sites",
+		Domains:           []string{"sites"},
 	})
 
 	Register(&ResourceType{
