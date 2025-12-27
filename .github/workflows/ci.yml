@@ -148,6 +148,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Download enriched API specifications
+        run: ./scripts/download-specs.sh
+
       - name: Build package
         run: npm run build
 
