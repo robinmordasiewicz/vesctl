@@ -222,16 +222,19 @@ export function generateZshCompletion(): string {
 		const { commands, subcommands } = getCustomDomainCommands(domain.name);
 
 		if (commands.length > 0 || subcommands.size > 0) {
-			const cmdDescriptions = commands
-				.map((c) => `'${c}:Command'`)
-				.join(" ");
-			const subDescriptions = Array.from(subcommands.keys())
-				.map((s) => `'${s}:Subcommand group'`)
+			const cmdDescriptions = commands.map((c) => `'${c}:Command'`);
+			const subDescriptions = Array.from(subcommands.keys()).map(
+				(s) => `'${s}:Subcommand group'`,
+			);
+
+			// Combine non-empty descriptions to avoid trailing whitespace
+			const allDescriptions = [...cmdDescriptions, ...subDescriptions]
+				.filter((d) => d.length > 0)
 				.join(" ");
 
 			customDomainCompletions.push(
 				`        (${domain.name})`,
-				`            _values 'command' ${cmdDescriptions} ${subDescriptions}`,
+				`            _values 'command' ${allDescriptions}`,
 				`            ;;`,
 			);
 		}
