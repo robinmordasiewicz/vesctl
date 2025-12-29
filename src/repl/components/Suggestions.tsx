@@ -89,7 +89,7 @@ export function Suggestions({
 	onSelect,
 	onNavigate,
 	onCancel,
-	maxVisible = 10,
+	maxVisible = 20,
 	isActive = true,
 }: SuggestionsProps): React.ReactElement | null {
 	// Handle keyboard navigation
