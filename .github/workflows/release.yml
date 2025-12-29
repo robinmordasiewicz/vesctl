@@ -246,6 +246,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate fresh completions
+        run: npm run generate:completions
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
@@ -260,7 +272,7 @@ jobs:
           VERSION="${{ needs.version.outputs.version }}"
           mkdir -p release-archives
 
-          # Create archives for each platform
+          # Create archives for each platform (includes completions)
           for file in binaries/*; do
             filename=$(basename "$file")
 
@@ -269,40 +281,40 @@ jobs:
                 ARCHIVE_NAME="xcsh_${VERSION}_linux_amd64.tar.gz"
                 mv "$file" xcsh
                 chmod +x xcsh
-                tar -czf "release-archives/${ARCHIVE_NAME}" xcsh
+                tar -czf "release-archives/${ARCHIVE_NAME}" xcsh completions/
                 rm xcsh
                 ;;
               *-linux-arm64)
                 ARCHIVE_NAME="xcsh_${VERSION}_linux_arm64.tar.gz"
                 mv "$file" xcsh
                 chmod +x xcsh
-                tar -czf "release-archives/${ARCHIVE_NAME}" xcsh
+                tar -czf "release-archives/${ARCHIVE_NAME}" xcsh completions/
                 rm xcsh
                 ;;
               *-macos-x64)
                 ARCHIVE_NAME="xcsh_${VERSION}_darwin_amd64.tar.gz"
                 mv "$file" xcsh
                 chmod +x xcsh
-                tar -czf "release-archives/${ARCHIVE_NAME}" xcsh
+                tar -czf "release-archives/${ARCHIVE_NAME}" xcsh completions/
                 rm xcsh
                 ;;
               *-macos-arm64)
                 ARCHIVE_NAME="xcsh_${VERSION}_darwin_arm64.tar.gz"
                 mv "$file" xcsh
                 chmod +x xcsh
-                tar -czf "release-archives/${ARCHIVE_NAME}" xcsh
+                tar -czf "release-archives/${ARCHIVE_NAME}" xcsh completions/
                 rm xcsh
                 ;;
               *-win-x64.exe)
                 ARCHIVE_NAME="xcsh_${VERSION}_windows_amd64.zip"
                 mv "$file" xcsh.exe
-                zip "release-archives/${ARCHIVE_NAME}" xcsh.exe
+                zip -r "release-archives/${ARCHIVE_NAME}" xcsh.exe completions/
                 rm xcsh.exe
                 ;;
               *-win-arm64.exe)
                 ARCHIVE_NAME="xcsh_${VERSION}_windows_arm64.zip"
                 mv "$file" xcsh.exe
-                zip "release-archives/${ARCHIVE_NAME}" xcsh.exe
+                zip -r "release-archives/${ARCHIVE_NAME}" xcsh.exe completions/
                 rm xcsh.exe
                 ;;
             esac
@@ -686,6 +698,31 @@ jobs:
 
             binary "xcsh"
 
+            # Install shell completions
+            postflight do
+              # Bash completions
+              bash_completion = "#{HOMEBREW_PREFIX}/etc/bash_completion.d"
+              system_command "/bin/mkdir", args: ["-p", bash_completion]
+              system_command "/bin/cp", args: ["#{staged_path}/completions/xcsh.bash", "#{bash_completion}/xcsh"]
+
+              # Zsh completions
+              zsh_completion = "#{HOMEBREW_PREFIX}/share/zsh/site-functions"
+              system_command "/bin/mkdir", args: ["-p", zsh_completion]
+              system_command "/bin/cp", args: ["#{staged_path}/completions/_xcsh", zsh_completion]
+
+              # Fish completions
+              fish_completion = "#{HOMEBREW_PREFIX}/share/fish/vendor_completions.d"
+              system_command "/bin/mkdir", args: ["-p", fish_completion]
+              system_command "/bin/cp", args: ["#{staged_path}/completions/xcsh.fish", fish_completion]
+            end
+
+            uninstall_postflight do
+              # Clean up shell completions
+              system_command "/bin/rm", args: ["-f", "#{HOMEBREW_PREFIX}/etc/bash_completion.d/xcsh"]
+              system_command "/bin/rm", args: ["-f", "#{HOMEBREW_PREFIX}/share/zsh/site-functions/_xcsh"]
+              system_command "/bin/rm", args: ["-f", "#{HOMEBREW_PREFIX}/share/fish/vendor_completions.d/xcsh.fish"]
+            end
+
             on_macos do
               on_intel do
                 url "https://github.com/robinmordasiewicz/xcsh/releases/download/v#{version}/xcsh_#{version}_darwin_amd64.tar.gz"
@@ -710,6 +747,9 @@ jobs:
 
             caveats <<~EOS
               xcsh has been installed.
+
+              Shell completions have been installed for bash, zsh, and fish.
+              You may need to restart your shell or source your shell config.
 
               For setup instructions, see:
                 https://robinmordasiewicz.github.io/xcsh/install/homebrew/
