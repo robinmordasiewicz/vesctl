@@ -441,7 +441,7 @@ export function App(): React.ReactElement {
 							onSelect={handleSuggestionSelect}
 							onNavigate={handleSuggestionNavigate}
 							onCancel={completion.hide}
-							maxVisible={10}
+							maxVisible={20}
 							isActive={false} // Let App handle keyboard
 						/>
 					) : (
