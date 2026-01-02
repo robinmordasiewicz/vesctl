@@ -14,6 +14,8 @@ import {
 	CLI_DESCRIPTION_LONG,
 	colorBoldWhite,
 	colorDim,
+	colorYellow,
+	colorRed,
 } from "../branding/index.js";
 import {
 	formatEnvVarsSection,
@@ -136,18 +138,28 @@ export function formatEnvironmentVariables(): string[] {
  * Uses the description resolver to source descriptions from upstream API specs.
  */
 export function formatDomainHelp(domain: DomainInfo): string[] {
-	const output: string[] = ["", colorBoldWhite(`${domain.displayName}`), ""];
+	// Build header with optional icon
+	const icon = domain.icon ? `${domain.icon} ` : "";
+	const output: string[] = [
+		"",
+		colorBoldWhite(`${icon}${domain.displayName}`),
+		"",
+	];
 
 	// Get description from resolver (uses upstream specs for API domains)
 	const descriptions = descriptionResolver.getDomainDescription(domain.name);
 	output.push(`  ${descriptions.long}`);
 	output.push("");
 
-	// Category and complexity if available
-	if (domain.category || domain.complexity) {
-		const meta: string[] = [];
-		if (domain.category) meta.push(`Category: ${domain.category}`);
-		if (domain.complexity) meta.push(`Complexity: ${domain.complexity}`);
+	// Category, UI category, and complexity if available
+	const meta: string[] = [];
+	if (domain.uiCategory) meta.push(`Category: ${domain.uiCategory}`);
+	else if (domain.category) meta.push(`Category: ${domain.category}`);
+	if (domain.complexity) meta.push(`Complexity: ${domain.complexity}`);
+	if (domain.requiresTier && domain.requiresTier !== "Standard") {
+		meta.push(`Tier: ${domain.requiresTier}`);
+	}
+	if (meta.length > 0) {
 		output.push(colorDim(`  ${meta.join("  |  ")}`));
 		output.push("");
 	}
@@ -177,6 +189,35 @@ export function formatDomainHelp(domain: DomainInfo): string[] {
 		output.push(`  ${action.padEnd(16)} ${desc}`);
 	}
 	output.push("");
+
+	// Primary resources with tier and dependencies (from upstream enrichment)
+	if (domain.primaryResources && domain.primaryResources.length > 0) {
+		output.push("RESOURCES");
+		for (const resource of domain.primaryResources) {
+			const tierBadge =
+				resource.tier !== "Standard" ? ` [${resource.tier}]` : "";
+			const icon = resource.icon ? `${resource.icon} ` : "";
+			output.push(`  ${icon}${resource.name}${colorDim(tierBadge)}`);
+			output.push(`      ${resource.descriptionShort}`);
+
+			// Show dependencies if any
+			if (resource.dependencies?.required?.length) {
+				output.push(
+					colorDim(
+						`      Requires: ${resource.dependencies.required.join(", ")}`,
+					),
+				);
+			}
+			if (resource.dependencies?.optional?.length) {
+				output.push(
+					colorDim(
+						`      Optional: ${resource.dependencies.optional.join(", ")}`,
+					),
+				);
+			}
+		}
+		output.push("");
+	}
 
 	// Examples
 	output.push("EXAMPLES");
@@ -219,6 +260,20 @@ export function formatDomainHelp(domain: DomainInfo): string[] {
 }
 
 /**
+ * Format danger level indicator with appropriate coloring.
+ */
+function formatDangerLevel(level: string): string {
+	switch (level.toLowerCase()) {
+		case "high":
+			return colorRed(`[DANGER: ${level.toUpperCase()}]`);
+		case "medium":
+			return colorYellow(`[CAUTION: ${level.toUpperCase()}]`);
+		default:
+			return colorDim(`[Risk: ${level}]`);
+	}
+}
+
+/**
  * Format action-level help.
  * Shows action-specific usage within a domain context.
  * Uses the description resolver to source descriptions from upstream OpenAPI specs.
@@ -256,13 +311,17 @@ export function formatActionHelp(domainName: string, action: string): string[] {
 		usagePatterns[action] ??
 		`${CLI_NAME} ${domainName} ${action} [options]`;
 
-	const output = [
-		"",
-		colorBoldWhite(`${displayDomain} - ${action}`),
-		"",
-		`  ${desc}`,
-		"",
-	];
+	// Build header with danger level warning if applicable
+	const output = ["", colorBoldWhite(`${displayDomain} - ${action}`)];
+
+	// Show danger level warning prominently in header
+	if (opInfo?.dangerLevel && opInfo.dangerLevel !== "low") {
+		output.push(`  ${formatDangerLevel(opInfo.dangerLevel)}`);
+	}
+
+	output.push("");
+	output.push(`  ${desc}`);
+	output.push("");
 
 	// Add purpose from x-ves-operation-metadata if available
 	if (opInfo?.purpose) {
@@ -282,12 +341,93 @@ export function formatActionHelp(domainName: string, action: string): string[] {
 		output.push("");
 	}
 
+	// Namespace scope information (from upstream enrichment)
+	if (opInfo?.namespaceScope) {
+		output.push("NAMESPACE SCOPE");
+		const scopeDesc: Record<string, string> = {
+			system: "This operation is only available in the 'system' namespace",
+			shared: "This operation is available in 'shared' namespace",
+			any: "This operation works in any namespace",
+		};
+		output.push(
+			`  ${scopeDesc[opInfo.namespaceScope] ?? opInfo.namespaceScope}`,
+		);
+		output.push("");
+	}
+
+	// Required and optional fields (from upstream enrichment)
+	if (opInfo?.requiredFields && opInfo.requiredFields.length > 0) {
+		output.push("REQUIRED FIELDS");
+		for (const field of opInfo.requiredFields) {
+			output.push(`  - ${field}`);
+		}
+		output.push("");
+	}
+
+	if (opInfo?.optionalFields && opInfo.optionalFields.length > 0) {
+		output.push("OPTIONAL FIELDS");
+		for (const field of opInfo.optionalFields.slice(0, 10)) {
+			output.push(colorDim(`  - ${field}`));
+		}
+		if (opInfo.optionalFields.length > 10) {
+			output.push(
+				colorDim(`  ... and ${opInfo.optionalFields.length - 10} more`),
+			);
+		}
+		output.push("");
+	}
+
+	// Side effects warning (from upstream enrichment)
+	if (opInfo?.sideEffects) {
+		const { creates, updates, deletes } = opInfo.sideEffects;
+		const hasSideEffects =
+			(creates && creates.length > 0) ||
+			(updates && updates.length > 0) ||
+			(deletes && deletes.length > 0);
+
+		if (hasSideEffects) {
+			output.push("SIDE EFFECTS");
+			if (creates && creates.length > 0) {
+				output.push(`  Creates: ${creates.join(", ")}`);
+			}
+			if (updates && updates.length > 0) {
+				output.push(`  Updates: ${updates.join(", ")}`);
+			}
+			if (deletes && deletes.length > 0) {
+				output.push(colorYellow(`  Deletes: ${deletes.join(", ")}`));
+			}
+			output.push("");
+		}
+	}
+
+	// Common errors with solutions (from upstream enrichment)
+	if (opInfo?.commonErrors && opInfo.commonErrors.length > 0) {
+		output.push("COMMON ERRORS");
+		for (const err of opInfo.commonErrors.slice(0, 3)) {
+			output.push(`  ${err.code}: ${err.message}`);
+			if (err.solution) {
+				output.push(colorDim(`    Solution: ${err.solution}`));
+			}
+		}
+		output.push("");
+	}
+
 	output.push("OPTIONS");
 	output.push("  -n, --name <name>     Resource name");
 	output.push("  -ns, --namespace <ns> Target namespace");
 	output.push("  -o, --output <fmt>    Output format (json, yaml, table)");
 	output.push("  -f, --file <path>     Configuration file");
 	output.push("");
+
+	// External documentation link (from upstream enrichment)
+	if (opInfo?.externalDocs) {
+		output.push("DOCUMENTATION");
+		const docDesc = opInfo.externalDocs.description || "See documentation";
+		output.push(`  ${docDesc}:`);
+		output.push(colorDim(`  ${opInfo.externalDocs.url}`));
+		output.push("");
+	}
+
 	output.push(
 		colorDim(`For domain help, run: ${CLI_NAME} ${domainName} --help`),
 	);

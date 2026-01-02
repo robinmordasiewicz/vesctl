@@ -12,16 +12,53 @@ import * as fs from "fs";
 import * as path from "path";
 
 // Types for OpenAPI spec structure
+interface CommonError {
+	code: number;
+	message: string;
+	solution?: string;
+}
+
+interface SideEffects {
+	creates?: string[];
+	updates?: string[];
+	deletes?: string[];
+}
+
+interface OperationConditions {
+	prerequisites?: string[];
+	postconditions?: string[];
+}
+
+interface OperationMetadata {
+	purpose?: string;
+	required_fields?: string[];
+	optional_fields?: string[];
+	field_docs?: Record<string, string>;
+	conditions?: OperationConditions;
+	side_effects?: SideEffects;
+	danger_level?: string;
+	confirmation_required?: boolean;
+	common_errors?: CommonError[];
+	performance_impact?: {
+		latency?: string;
+		resource_usage?: string;
+	};
+}
+
+interface ExternalDocs {
+	url?: string;
+	description?: string;
+}
+
 interface OpenAPIOperation {
 	summary?: string;
 	description?: string;
 	operationId?: string;
 	tags?: string[];
-	"x-ves-operation-metadata"?: {
-		purpose?: string;
-		side_effects?: Record<string, unknown>;
-		common_errors?: string[];
-	};
+	externalDocs?: ExternalDocs;
+	"x-ves-danger-level"?: string;
+	"x-ves-namespace-scope"?: string | null;
+	"x-ves-operation-metadata"?: OperationMetadata;
 }
 
 interface OpenAPIPathItem {
@@ -48,7 +85,24 @@ interface OpenAPISpec {
 	}>;
 }
 
-// Output types
+// Output types - safety metadata
+interface OperationSideEffects {
+	creates?: string[];
+	updates?: string[];
+	deletes?: string[];
+}
+
+interface OperationCommonError {
+	code: number;
+	message: string;
+	solution?: string;
+}
+
+interface OperationExternalDocs {
+	url?: string;
+	description?: string;
+}
+
 interface OperationInfo {
 	action: string; // "create", "list", "get", "delete", "replace"
 	resourceType: string; // "http_loadbalancer", "api_crawler"
@@ -57,6 +111,17 @@ interface OperationInfo {
 	description: string;
 	purpose?: string;
 	path: string;
+	// Safety metadata (from upstream enrichment)
+	dangerLevel?: "low" | "medium" | "high";
+	requiredFields?: string[];
+	optionalFields?: string[];
+	sideEffects?: OperationSideEffects;
+	confirmationRequired?: boolean;
+	commonErrors?: OperationCommonError[];
+	// Documentation
+	externalDocs?: OperationExternalDocs;
+	// Namespace scope
+	namespaceScope?: "system" | "shared" | "any" | null;
 }
 
 interface DomainOperations {
@@ -178,9 +243,57 @@ function processSpec(specPath: string): DomainOperations | null {
 				path: pathPattern,
 			};
 
-			// Extract purpose from x-ves-operation-metadata if available
-			if (operation["x-ves-operation-metadata"]?.purpose) {
-				opInfo.purpose = operation["x-ves-operation-metadata"].purpose;
+			// Extract operation metadata if available
+			const metadata = operation["x-ves-operation-metadata"];
+			if (metadata) {
+				if (metadata.purpose) {
+					opInfo.purpose = metadata.purpose;
+				}
+				if (metadata.required_fields?.length) {
+					opInfo.requiredFields = metadata.required_fields;
+				}
+				if (metadata.optional_fields?.length) {
+					opInfo.optionalFields = metadata.optional_fields;
+				}
+				if (metadata.side_effects) {
+					opInfo.sideEffects = {
+						creates: metadata.side_effects.creates,
+						updates: metadata.side_effects.updates,
+						deletes: metadata.side_effects.deletes,
+					};
+				}
+				if (metadata.confirmation_required !== undefined) {
+					opInfo.confirmationRequired = metadata.confirmation_required;
+				}
+				if (metadata.common_errors?.length) {
+					opInfo.commonErrors = metadata.common_errors.map((e) => ({
+						code: e.code,
+						message: e.message,
+						solution: e.solution,
+					}));
+				}
+				// danger_level from metadata takes precedence
+				if (metadata.danger_level) {
+					opInfo.dangerLevel = metadata.danger_level as "low" | "medium" | "high";
+				}
+			}
+
+			// Extract x-ves-danger-level (top-level takes precedence if present)
+			if (operation["x-ves-danger-level"]) {
+				opInfo.dangerLevel = operation["x-ves-danger-level"] as "low" | "medium" | "high";
+			}
+
+			// Extract x-ves-namespace-scope
+			if (operation["x-ves-namespace-scope"] !== undefined) {
+				opInfo.namespaceScope = operation["x-ves-namespace-scope"] as "system" | "shared" | "any" | null;
+			}
+
+			// Extract externalDocs
+			if (operation.externalDocs) {
+				opInfo.externalDocs = {
+					url: operation.externalDocs.url,
+					description: operation.externalDocs.description,
+				};
 			}
 
 			operations.push(opInfo);
@@ -222,6 +335,66 @@ function generateOperationEntry(op: OperationInfo): string {
 		code += `\t\t\tpurpose: "${escapeString(op.purpose)}",\n`;
 	}
 	code += `\t\t\tpath: "${escapeString(op.path)}",\n`;
+
+	// Safety metadata
+	if (op.dangerLevel) {
+		code += `\t\t\tdangerLevel: "${op.dangerLevel}",\n`;
+	}
+	if (op.requiredFields?.length) {
+		const fields = op.requiredFields.map((f) => `"${escapeString(f)}"`).join(", ");
+		code += `\t\t\trequiredFields: [${fields}],\n`;
+	}
+	if (op.optionalFields?.length) {
+		const fields = op.optionalFields.map((f) => `"${escapeString(f)}"`).join(", ");
+		code += `\t\t\toptionalFields: [${fields}],\n`;
+	}
+	if (op.sideEffects) {
+		const parts: string[] = [];
+		if (op.sideEffects.creates?.length) {
+			parts.push(`creates: [${op.sideEffects.creates.map((c) => `"${escapeString(c)}"`).join(", ")}]`);
+		}
+		if (op.sideEffects.updates?.length) {
+			parts.push(`updates: [${op.sideEffects.updates.map((u) => `"${escapeString(u)}"`).join(", ")}]`);
+		}
+		if (op.sideEffects.deletes?.length) {
+			parts.push(`deletes: [${op.sideEffects.deletes.map((d) => `"${escapeString(d)}"`).join(", ")}]`);
+		}
+		if (parts.length > 0) {
+			code += `\t\t\tsideEffects: { ${parts.join(", ")} },\n`;
+		}
+	}
+	if (op.confirmationRequired !== undefined) {
+		code += `\t\t\tconfirmationRequired: ${op.confirmationRequired},\n`;
+	}
+	if (op.commonErrors?.length) {
+		const errors = op.commonErrors.map((e) => {
+			const errParts = [`code: ${e.code}`, `message: "${escapeString(e.message)}"`];
+			if (e.solution) {
+				errParts.push(`solution: "${escapeString(e.solution)}"`);
+			}
+			return `{ ${errParts.join(", ")} }`;
+		}).join(", ");
+		code += `\t\t\tcommonErrors: [${errors}],\n`;
+	}
+
+	// External docs
+	if (op.externalDocs?.url) {
+		const docParts = [`url: "${escapeString(op.externalDocs.url)}"`];
+		if (op.externalDocs.description) {
+			docParts.push(`description: "${escapeString(op.externalDocs.description)}"`);
+		}
+		code += `\t\t\texternalDocs: { ${docParts.join(", ")} },\n`;
+	}
+
+	// Namespace scope
+	if (op.namespaceScope !== undefined) {
+		if (op.namespaceScope === null) {
+			code += `\t\t\tnamespaceScope: null,\n`;
+		} else {
+			code += `\t\t\tnamespaceScope: "${op.namespaceScope}",\n`;
+		}
+	}
+
 	code += `\t\t}`;
 	return code;
 }
@@ -322,6 +495,32 @@ async function main(): Promise<void> {
  */
 
 /**
+ * Side effects of an operation
+ */
+export interface OperationSideEffects {
+	creates?: string[];
+	updates?: string[];
+	deletes?: string[];
+}
+
+/**
+ * Common error with solution
+ */
+export interface OperationCommonError {
+	code: number;
+	message: string;
+	solution?: string;
+}
+
+/**
+ * External documentation link
+ */
+export interface OperationExternalDocs {
+	url?: string;
+	description?: string;
+}
+
+/**
  * Operation information extracted from OpenAPI specs
  */
 export interface OperationInfo {
@@ -339,6 +538,22 @@ export interface OperationInfo {
 	purpose?: string;
 	/** API path pattern */
 	path: string;
+	/** Danger level for safety warnings */
+	dangerLevel?: "low" | "medium" | "high";
+	/** Required fields for this operation */
+	requiredFields?: string[];
+	/** Optional fields for this operation */
+	optionalFields?: string[];
+	/** Side effects (creates, updates, deletes) */
+	sideEffects?: OperationSideEffects;
+	/** Whether confirmation is required before execution */
+	confirmationRequired?: boolean;
+	/** Common errors with solutions */
+	commonErrors?: OperationCommonError[];
+	/** External documentation link */
+	externalDocs?: OperationExternalDocs;
+	/** Namespace scope restriction */
+	namespaceScope?: "system" | "shared" | "any" | null;
 }
 
 /**

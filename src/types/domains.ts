@@ -10,6 +10,41 @@ import {
 } from "./domains_generated.js";
 
 /**
+ * Resource dependency information
+ */
+export interface ResourceDependencies {
+	required?: string[];
+	optional?: string[];
+}
+
+/**
+ * Subscription tier levels for resources
+ */
+export type SubscriptionTier =
+	| "Free"
+	| "Standard"
+	| "Advanced"
+	| "Enterprise"
+	| "WAAP";
+
+/**
+ * Resource metadata for primary resources within a domain
+ * Contains tier, dependencies, and relationship information
+ */
+export interface ResourceMetadata {
+	name: string;
+	description: string;
+	descriptionShort: string;
+	tier: SubscriptionTier;
+	icon?: string;
+	category?: string;
+	supportsLogs?: boolean;
+	supportsMetrics?: boolean;
+	dependencies?: ResourceDependencies;
+	relationshipHints?: string[];
+}
+
+/**
  * DomainInfo contains metadata about a resource domain
  */
 export interface DomainInfo {
@@ -28,6 +63,14 @@ export interface DomainInfo {
 	useCases?: string[];
 	relatedDomains?: string[];
 	cliMetadata?: Record<string, unknown>;
+
+	// Visual identity fields (from upstream enrichment)
+	icon?: string; // Emoji icon (e.g., "🌐")
+	logoSvg?: string; // Inline SVG data URI
+	uiCategory?: string; // UI grouping (e.g., "Load Balancing", "Security")
+
+	// Rich resource metadata (from upstream enrichment)
+	primaryResources?: ResourceMetadata[];
 }
 
 /**
