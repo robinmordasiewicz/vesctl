@@ -8,13 +8,13 @@ import { Box, Text, useApp, useInput, useStdout, Static } from "ink";
 
 import { InputBox, StatusBar, Suggestions } from "./components/index.js";
 import type { Suggestion } from "./components/Suggestions.js";
-import { getGitInfo, type GitInfo } from "./components/StatusBar.js";
 import { REPLSession } from "./session.js";
 import { buildPlainPrompt } from "./prompt.js";
 import { colorBlue, colorBoldWhite } from "../branding/index.js";
 import { useDoubleCtrlC } from "./hooks/useDoubleCtrlC.js";
 import { useHistory } from "./hooks/useHistory.js";
 import { useCompletion } from "./hooks/useCompletion.js";
+import { useGitStatus } from "./hooks/useGitStatus.js";
 import { executeCommand } from "./executor.js";
 import { isCustomDomain } from "../domains/index.js";
 import { domainRegistry } from "../types/domains.js";
@@ -97,7 +97,6 @@ export function App({ initialSession }: AppProps = {}): React.ReactElement {
 	const outputIdRef = useRef(0);
 	const [prompt, setPrompt] = useState("> ");
 	const [width, setWidth] = useState(stdout?.columns ?? 80);
-	const [gitInfo, setGitInfo] = useState<GitInfo | undefined>(undefined);
 	const [statusHint, setStatusHint] = useState("Ctrl+C twice to exit");
 	const [historyArray, setHistoryArray] = useState<string[]>([]);
 	const [inputKey, setInputKey] = useState(0); // Key to reset cursor position
@@ -125,6 +124,9 @@ export function App({ initialSession }: AppProps = {}): React.ReactElement {
 			setHideStatusBar(false);
 		}
 	}, [hideStatusBar, pendingRawStdout]);
+
+	// Git status hook - auto-refresh on timer and manual refresh via Ctrl+G or command
+	const gitStatus = useGitStatus({ enabled: isInitialized });
 
 	// Completion state
 	const completion = useCompletion({
@@ -163,7 +165,7 @@ export function App({ initialSession }: AppProps = {}): React.ReactElement {
 				setIsInitialized(true);
 			}
 
-			// Always set up prompt, history, and git info
+			// Always set up prompt and history (git info handled by hook)
 			setPrompt(buildPlainPrompt(session));
 
 			// Get initial history array
@@ -171,9 +173,6 @@ export function App({ initialSession }: AppProps = {}): React.ReactElement {
 			if (histMgr) {
 				setHistoryArray(histMgr.getHistory());
 			}
-
-			// Get git repository info
-			setGitInfo(getGitInfo());
 		};
 		init();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -316,10 +315,18 @@ export function App({ initialSession }: AppProps = {}): React.ReactElement {
 				setPrompt(buildPlainPrompt(session));
 			}
 
+			// Refresh git status after command execution (or if explicitly requested)
+			if (result.refreshGit) {
+				gitStatus.refresh();
+			} else {
+				// Always refresh git status after any command
+				gitStatus.refresh();
+			}
+
 			// Refresh history
 			refreshHistory();
 		},
-		[session, prompt, addOutput, exit, refreshHistory],
+		[session, prompt, addOutput, exit, refreshHistory, gitStatus],
 	);
 
 	// Handle input change
@@ -404,6 +411,14 @@ export function App({ initialSession }: AppProps = {}): React.ReactElement {
 		// Ctrl+D - immediate exit
 		if (key.ctrl && char === "d") {
 			session.saveHistory().finally(() => exit());
+			return;
+		}
+
+		// Ctrl+G - refresh git status
+		if (key.ctrl && char === "g") {
+			gitStatus.refresh();
+			setStatusHint("Git status refreshed");
+			setTimeout(() => setStatusHint("Ctrl+C twice to exit"), 2000);
 			return;
 		}
 
@@ -552,7 +567,7 @@ export function App({ initialSession }: AppProps = {}): React.ReactElement {
 						/>
 					) : (
 						<StatusBar
-							gitInfo={gitInfo}
+							gitInfo={gitStatus.gitInfo}
 							width={width}
 							hint={statusHint}
 						/>

@@ -176,6 +176,7 @@ _xcsh() {
                 'exit:Exit the shell'
                 'clear:Clear the screen'
                 'history:Show command history'
+                'refresh:Refresh git status in statusline'
                 'context:Show current navigation context'
                 'ctx:Show current navigation context'
             )
@@ -196,7 +197,7 @@ _xcsh() {
         (login)
             _values 'command' 'banner:Display xcsh banner with logo' 'profile:Manage saved connection profiles' 'context:Manage default namespace context'
             ;;
-                (help|quit|exit|clear|history|context|ctx)
+                (help|quit|exit|clear|history|refresh|context|ctx)
                     ;;
                 (*)
                     local -a actions

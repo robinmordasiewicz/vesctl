@@ -74,9 +74,9 @@ _xcsh_completions() {
   local cur prev words cword
   _init_completion || return
 
-  local commands="${domainNames} ${allAliases.join(" ")} help quit exit clear history"
+  local commands="${domainNames} ${allAliases.join(" ")} help quit exit clear history refresh"
   local actions="${actions}"
-  local builtins="help quit exit clear history context ctx"
+  local builtins="help quit exit clear history context ctx refresh"
   local global_flags="--help -h --version -v --no-color --output -o --namespace -ns --spec"
 
   # Handle completion based on position
@@ -95,7 +95,7 @@ _xcsh_completions() {
       local domain="\${words[1]}"
       case "\${domain}" in
 ${customDomainCompletions.join("\n")}
-        help | quit | exit | clear | history | context | ctx)
+        help | quit | exit | clear | history | refresh | context | ctx)
           return 0
           ;;
         *)
@@ -206,6 +206,7 @@ _xcsh() {
                 'exit:Exit the shell'
                 'clear:Clear the screen'
                 'history:Show command history'
+                'refresh:Refresh git status in statusline'
                 'context:Show current navigation context'
                 'ctx:Show current navigation context'
             )
@@ -215,7 +216,7 @@ _xcsh() {
         (action)
             case \${line[1]} in
 ${customDomainCompletions.join("\n")}
-                (help|quit|exit|clear|history|context|ctx)
+                (help|quit|exit|clear|history|refresh|context|ctx)
                     ;;
                 (*)
                     local -a actions
@@ -334,6 +335,7 @@ complete -c xcsh -n "__fish_use_subcommand" -a "quit" -d 'Exit the shell'
 complete -c xcsh -n "__fish_use_subcommand" -a "exit" -d 'Exit the shell'
 complete -c xcsh -n "__fish_use_subcommand" -a "clear" -d 'Clear the screen'
 complete -c xcsh -n "__fish_use_subcommand" -a "history" -d 'Show command history'
+complete -c xcsh -n "__fish_use_subcommand" -a "refresh" -d 'Refresh git status in statusline'
 complete -c xcsh -n "__fish_use_subcommand" -a "context" -d 'Show current navigation context'
 complete -c xcsh -n "__fish_use_subcommand" -a "ctx" -d 'Show current navigation context'
 

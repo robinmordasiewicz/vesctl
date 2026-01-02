@@ -105,7 +105,16 @@ export function formatRootHelp(): string[] {
 		"  domains               List all available domains",
 		"  clear                 Clear the screen",
 		"  history               Show command history",
+		"  refresh               Refresh git status in statusline",
 		"  quit, exit            Exit the shell",
+		"",
+		"KEYBOARD SHORTCUTS",
+		"  Ctrl+C (x2)           Exit the shell",
+		"  Ctrl+D                Exit immediately",
+		"  Ctrl+G                Refresh git status",
+		"  Tab                   Trigger completion",
+		"  Up/Down               Navigate history or suggestions",
+		"  Escape                Cancel suggestions",
 		"",
 	];
 }

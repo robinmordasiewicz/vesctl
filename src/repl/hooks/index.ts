@@ -5,3 +5,4 @@
 export { useDoubleCtrlC } from "./useDoubleCtrlC.js";
 export { useHistory } from "./useHistory.js";
 export { useCompletion } from "./useCompletion.js";
+export { useGitStatus } from "./useGitStatus.js";

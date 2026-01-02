@@ -18,6 +18,7 @@ complete -c xcsh -n "__fish_use_subcommand" -a "quit" -d 'Exit the shell'
 complete -c xcsh -n "__fish_use_subcommand" -a "exit" -d 'Exit the shell'
 complete -c xcsh -n "__fish_use_subcommand" -a "clear" -d 'Clear the screen'
 complete -c xcsh -n "__fish_use_subcommand" -a "history" -d 'Show command history'
+complete -c xcsh -n "__fish_use_subcommand" -a "refresh" -d 'Refresh git status in statusline'
 complete -c xcsh -n "__fish_use_subcommand" -a "context" -d 'Show current navigation context'
 complete -c xcsh -n "__fish_use_subcommand" -a "ctx" -d 'Show current navigation context'
 
