@@ -11,6 +11,22 @@ import * as path from "path";
 import * as yaml from "yaml";
 
 // Types matching the upstream spec structure
+interface SpecPrimaryResource {
+	name: string;
+	description: string;
+	description_short: string;
+	tier: string;
+	icon?: string;
+	category?: string;
+	supports_logs?: boolean;
+	supports_metrics?: boolean;
+	dependencies?: {
+		required?: string[];
+		optional?: string[];
+	};
+	relationship_hints?: string[];
+}
+
 interface SpecIndexEntry {
 	domain: string;
 	title: string;
@@ -28,6 +44,13 @@ interface SpecIndexEntry {
 	related_domains: string[];
 	aliases?: string[]; // Added in upstream spec (issue #178)
 	cli_metadata?: Record<string, unknown>;
+	// Visual identity fields (from upstream enrichment)
+	icon?: string; // Emoji icon
+	logo_svg?: string; // SVG data URI
+	ui_category?: string; // UI grouping category
+	// Rich resource metadata (from upstream enrichment)
+	primary_resources?: SpecPrimaryResource[];
+	primary_resources_simple?: string[]; // Simple list fallback
 }
 
 interface SpecIndex {
@@ -49,6 +72,22 @@ interface DomainConfig {
 	>;
 }
 
+interface ResourceMetadata {
+	name: string;
+	description: string;
+	descriptionShort: string;
+	tier: string;
+	icon?: string;
+	category?: string;
+	supportsLogs?: boolean;
+	supportsMetrics?: boolean;
+	dependencies?: {
+		required?: string[];
+		optional?: string[];
+	};
+	relationshipHints?: string[];
+}
+
 interface DomainInfo {
 	name: string;
 	displayName: string;
@@ -63,6 +102,12 @@ interface DomainInfo {
 	useCases: string[];
 	relatedDomains: string[];
 	cliMetadata?: Record<string, unknown>;
+	// Visual identity fields
+	icon?: string;
+	logoSvg?: string;
+	uiCategory?: string;
+	// Rich resource metadata
+	primaryResources?: ResourceMetadata[];
 }
 
 /**
@@ -87,6 +132,51 @@ function escapeString(s: string): string {
 		.replace(/\n/g, "\\n")
 		.replace(/\r/g, "\\r")
 		.replace(/\t/g, "\\t");
+}
+
+/**
+ * Generate TypeScript code for a resource metadata entry
+ */
+function generateResourceMetadata(resource: ResourceMetadata): string {
+	let code = "{\n";
+	code += `\t\t\t\tname: "${escapeString(resource.name)}",\n`;
+	code += `\t\t\t\tdescription: "${escapeString(resource.description)}",\n`;
+	code += `\t\t\t\tdescriptionShort: "${escapeString(resource.descriptionShort)}",\n`;
+	code += `\t\t\t\ttier: "${resource.tier}" as const,\n`;
+
+	if (resource.icon) {
+		code += `\t\t\t\ticon: "${escapeString(resource.icon)}",\n`;
+	}
+	if (resource.category) {
+		code += `\t\t\t\tcategory: "${escapeString(resource.category)}",\n`;
+	}
+	if (resource.supportsLogs !== undefined) {
+		code += `\t\t\t\tsupportsLogs: ${resource.supportsLogs},\n`;
+	}
+	if (resource.supportsMetrics !== undefined) {
+		code += `\t\t\t\tsupportsMetrics: ${resource.supportsMetrics},\n`;
+	}
+	if (resource.dependencies) {
+		const depsRequired = resource.dependencies.required?.length
+			? `required: [${resource.dependencies.required.map((r) => `"${escapeString(r)}"`).join(", ")}]`
+			: "";
+		const depsOptional = resource.dependencies.optional?.length
+			? `optional: [${resource.dependencies.optional.map((o) => `"${escapeString(o)}"`).join(", ")}]`
+			: "";
+		const depsParts = [depsRequired, depsOptional].filter(Boolean);
+		if (depsParts.length > 0) {
+			code += `\t\t\t\tdependencies: { ${depsParts.join(", ")} },\n`;
+		}
+	}
+	if (resource.relationshipHints?.length) {
+		const hints = resource.relationshipHints
+			.map((h) => `"${escapeString(h)}"`)
+			.join(", ");
+		code += `\t\t\t\trelationshipHints: [${hints}],\n`;
+	}
+
+	code += "\t\t\t}";
+	return code;
 }
 
 /**
@@ -119,6 +209,25 @@ function generateDomainEntry(domain: DomainInfo): string {
 
 	if (domain.cliMetadata && Object.keys(domain.cliMetadata).length > 0) {
 		code += `\t\tcliMetadata: ${JSON.stringify(domain.cliMetadata, null, 2).replace(/\n/g, "\n\t\t")},\n`;
+	}
+
+	// Visual identity fields
+	if (domain.icon) {
+		code += `\t\ticon: "${escapeString(domain.icon)}",\n`;
+	}
+	if (domain.logoSvg) {
+		code += `\t\tlogoSvg: "${escapeString(domain.logoSvg)}",\n`;
+	}
+	if (domain.uiCategory) {
+		code += `\t\tuiCategory: "${escapeString(domain.uiCategory)}",\n`;
+	}
+
+	// Rich resource metadata
+	if (domain.primaryResources && domain.primaryResources.length > 0) {
+		const resourceEntries = domain.primaryResources
+			.map((r) => generateResourceMetadata(r))
+			.join(",\n\t\t\t");
+		code += `\t\tprimaryResources: [\n\t\t\t${resourceEntries}\n\t\t],\n`;
 	}
 
 	code += `\t}]`;
@@ -190,6 +299,21 @@ async function main(): Promise<void> {
 			? spec.aliases
 			: config.aliases?.[spec.domain] || [];
 
+		// Transform primary_resources from upstream format to internal format
+		const primaryResources: ResourceMetadata[] | undefined =
+			spec.primary_resources?.map((r) => ({
+				name: r.name,
+				description: r.description || "",
+				descriptionShort: r.description_short || "",
+				tier: r.tier || "Standard",
+				icon: r.icon,
+				category: r.category,
+				supportsLogs: r.supports_logs,
+				supportsMetrics: r.supports_metrics,
+				dependencies: r.dependencies,
+				relationshipHints: r.relationship_hints,
+			}));
+
 		const domainInfo: DomainInfo = {
 			name: spec.domain,
 			displayName: titleCase(spec.domain),
@@ -204,6 +328,12 @@ async function main(): Promise<void> {
 			useCases: spec.use_cases || [],
 			relatedDomains: spec.related_domains || [],
 			cliMetadata: spec.cli_metadata,
+			// Visual identity fields
+			icon: spec.icon,
+			logoSvg: spec.logo_svg,
+			uiCategory: spec.ui_category,
+			// Rich resource metadata
+			primaryResources,
 		};
 
 		domains.push(domainInfo);
@@ -223,7 +353,10 @@ async function main(): Promise<void> {
  * Run: npx tsx scripts/generate-domains.ts
  */
 
-import type { DomainInfo } from "./domains.js";
+import type { DomainInfo, ResourceMetadata, SubscriptionTier } from "./domains.js";
+
+// Re-export types for consumers
+export type { ResourceMetadata, SubscriptionTier };
 
 /**
  * Spec version used for generation

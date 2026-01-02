@@ -37,6 +37,10 @@ import {
 	formatTopicHelp,
 } from "./help.js";
 import { getDomainInfo } from "../types/domains.js";
+import {
+	validateNamespaceScope,
+	checkOperationSafety,
+} from "../validation/index.js";
 
 /**
  * Command execution result
@@ -993,6 +997,35 @@ async function executeAPICommand(
 		parseCommandArgs(args);
 	const effectiveNamespace = namespace ?? session.getNamespace();
 
+	// Validate namespace scope (from upstream enrichment)
+	const nsValidation = validateNamespaceScope(
+		canonicalDomain,
+		action,
+		effectiveNamespace,
+	);
+	if (!nsValidation.valid) {
+		const errorMsg =
+			nsValidation.message || "Invalid namespace for this operation";
+		const suggestion = nsValidation.suggestion
+			? `\nSuggestion: Use --namespace ${nsValidation.suggestion}`
+			: "";
+		return {
+			output: [`Error: ${errorMsg}${suggestion}`],
+			shouldExit: false,
+			shouldClear: false,
+			contextChanged: false,
+			error: errorMsg,
+		};
+	}
+
+	// Check operation safety and show warnings for dangerous operations
+	const safetyCheck = checkOperationSafety(canonicalDomain, action);
+	const warningOutput: string[] = [];
+	if (safetyCheck.warning) {
+		warningOutput.push(safetyCheck.warning);
+		warningOutput.push("");
+	}
+
 	// Handle --spec flag: return command specification for AI assistants
 	if (spec) {
 		const commandPath = `${canonicalDomain} ${action}`;
@@ -1144,8 +1177,14 @@ async function executeAPICommand(
 			noColor: noColor ?? false,
 		});
 
+		// Prepend safety warnings if any
+		const finalOutput = [
+			...warningOutput,
+			...(formatted.length > 0 ? formatted : ["(no output)"]),
+		];
+
 		return {
-			output: formatted.length > 0 ? formatted : ["(no output)"],
+			output: finalOutput,
 			shouldExit: false,
 			shouldClear: false,
 			contextChanged: false,
