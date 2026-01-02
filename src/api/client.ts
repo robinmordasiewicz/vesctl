@@ -17,9 +17,9 @@ import { APIError } from "./types.js";
  * Default retry configuration
  */
 const DEFAULT_RETRY_CONFIG: Required<RetryConfig> = {
-	maxRetries: 3,
-	initialDelayMs: 1000,
-	maxDelayMs: 10000,
+	maxRetries: 2,
+	initialDelayMs: 500,
+	maxDelayMs: 5000,
 	backoffMultiplier: 2,
 	jitter: true,
 };
@@ -81,7 +81,7 @@ export class APIClient {
 		// Normalize server URL (remove trailing slash)
 		this.serverUrl = config.serverUrl.replace(/\/+$/, "");
 		this.apiToken = config.apiToken ?? "";
-		this.timeout = config.timeout ?? 30000;
+		this.timeout = config.timeout ?? 15000; // 15 second default timeout
 		this.debug = config.debug ?? false;
 		this.retryConfig = {
 			...DEFAULT_RETRY_CONFIG,
@@ -212,20 +212,34 @@ export class APIClient {
 
 	/**
 	 * Check if an error is retryable
+	 *
+	 * Permanent network errors (connection refused, DNS not found) are NOT retried
+	 * since retrying won't help if the server is unreachable.
 	 */
 	private isRetryableError(error: unknown): boolean {
 		if (error instanceof APIError) {
 			return RETRYABLE_STATUS_CODES.has(error.statusCode);
 		}
-		// Network errors and timeouts are retryable
+		// Only retry transient network errors, not permanent ones
 		if (error instanceof Error) {
+			const message = error.message.toLowerCase();
+
+			// Permanent errors - do NOT retry (server unreachable)
+			if (
+				message.includes("econnrefused") ||
+				message.includes("enotfound") ||
+				message.includes("ehostunreach") ||
+				message.includes("enetunreach")
+			) {
+				return false;
+			}
+
+			// Transient errors - retry these
 			return (
 				error.name === "AbortError" ||
-				error.message.includes("fetch failed") ||
-				error.message.includes("network") ||
-				error.message.includes("ECONNREFUSED") ||
-				error.message.includes("ENOTFOUND") ||
-				error.message.includes("ETIMEDOUT")
+				message.includes("etimedout") ||
+				message.includes("econnreset") ||
+				message.includes("socket hang up")
 			);
 		}
 		return false;
