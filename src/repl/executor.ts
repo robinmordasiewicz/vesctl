@@ -65,6 +65,8 @@ export interface ExecutionResult {
 	 * like the image banner.
 	 */
 	rawStdout?: string;
+	/** Whether to trigger git status refresh */
+	refreshGit?: boolean;
 }
 
 /**
@@ -87,6 +89,7 @@ const BUILTIN_COMMANDS = new Set([
 	"version",
 	"domains",
 	"whoami",
+	"refresh",
 ]);
 
 /**
@@ -450,6 +453,17 @@ function executeBuiltin(
 			shouldExit: false,
 			shouldClear: false,
 			contextChanged: false,
+		};
+	}
+
+	// Refresh git status
+	if (command === "refresh") {
+		return {
+			output: ["Git status refreshed"],
+			shouldExit: false,
+			shouldClear: false,
+			contextChanged: false,
+			refreshGit: true,
 		};
 	}
 
@@ -1406,6 +1420,7 @@ function getBuiltinDescription(cmd: string): string {
 		["history", "Show command history"],
 		["version", "Show version info"],
 		["domains", "List available domains"],
+		["refresh", "Refresh git status"],
 	]);
 	return descriptions.get(cmd) ?? "Built-in command";
 }
