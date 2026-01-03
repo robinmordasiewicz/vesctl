@@ -819,6 +819,33 @@ jobs:
           echo "Generated documentation directories:"
           ls -la docs/commands/ | head -20
 
+      - name: Generate subscription documentation
+        id: generate-subscription-docs
+        run: |
+          # Find xcsh binary
+          XCSH_PATH=""
+          for path in /opt/homebrew/bin/xcsh /usr/local/bin/xcsh "$HOME/.local/bin/xcsh"; do
+            if [ -x "$path" ]; then
+              XCSH_PATH="$path"
+              break
+            fi
+          done
+
+          if [ -z "$XCSH_PATH" ] || [ ! -x "$XCSH_PATH" ]; then
+            XCSH_PATH=$(find /opt/homebrew/Caskroom/xcsh /usr/local/Caskroom/xcsh -name xcsh -type f 2>/dev/null | head -1 || true)
+          fi
+
+          if [ -n "$XCSH_PATH" ] && [ -x "$XCSH_PATH" ]; then
+            echo "Generating subscription documentation with: $XCSH_PATH"
+            python scripts/generate-subscription-docs.py \
+              --cli-binary "$XCSH_PATH" \
+              --output docs/commands/subscription \
+              --clean
+            echo "✅ Subscription documentation generated successfully"
+          else
+            echo "::warning::xcsh binary not found - skipping subscription documentation"
+          fi
+
       - name: Validate required documentation files
         id: validate-docs
         run: |

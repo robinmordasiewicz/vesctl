@@ -50,8 +50,9 @@ sea-config.json
 sea-prep.blob
 
 # Generated documentation (regenerated in CI)
-docs/commands/
+docs/commands/*
 !docs/commands/.gitkeep
+!docs/commands/_nav.yml
 
 # MkDocs build output
 site/
