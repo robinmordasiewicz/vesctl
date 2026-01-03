@@ -1,0 +1,120 @@
+---
+title: "{{ front_matter.title }}"
+description: "{{ front_matter.description }}"
+keywords:
+{% for kw in front_matter.keywords %}
+  - {{ kw }}
+{% endfor %}
+command: "{{ front_matter.command }}"
+command_group: "{{ front_matter.command_group }}"
+{% if front_matter.aliases %}
+aliases:
+{% for alias in front_matter.aliases %}
+  - "{{ alias }}"
+{% endfor %}
+{% endif %}
+---
+
+# xcsh subscription
+
+> {{ command.short | normalize_acronyms }}
+
+## Synopsis
+
+```bash
+xcsh subscription <command> [flags]
+```
+
+{% if command.long and command.long != command.short %}
+## Overview
+
+{{ command.long | normalize_acronyms }}
+
+{% endif %}
+{% if command.aliases %}
+## Aliases
+
+This command can also be invoked as:
+
+{% for alias in command.aliases %}
+- `xcsh {{ alias }}`
+{% endfor %}
+
+{% endif %}
+## Available Commands
+
+{% if leaf_commands %}
+### Quick Commands
+
+| Command | Description |
+|---------|-------------|
+{% for cmd in leaf_commands %}
+| [{{ cmd.path[-1] }}]({{ cmd.path[-1] }}.md) | {{ cmd.short | normalize_acronyms }} |
+{% endfor %}
+
+{% endif %}
+{% if group_commands %}
+### Management Commands
+
+| Command | Description |
+|---------|-------------|
+{% for cmd in group_commands %}
+| [{{ cmd.path[-1] }}]({{ cmd.path[-1] }}/index.md) | {{ cmd.short | normalize_acronyms }} |
+{% endfor %}
+{% endif %}
+
+{% if command.flags %}
+## Global Flags
+
+| Flag | Short | Type | Default | Description |
+|------|-------|------|---------|-------------|
+{% for flag in command.flags %}
+| `--{{ flag.name }}` | {% if flag.shorthand %}`-{{ flag.shorthand }}`{% endif %} | {{ flag.type }} | {% if flag.default %}{{ flag.default }}{% endif %} | {{ flag.description | normalize_acronyms }} |
+{% endfor %}
+
+{% endif %}
+{% if command.example %}
+## Examples
+
+```bash
+{{ command.example }}
+```
+
+{% endif %}
+{% if workflows %}
+## Common Workflows
+
+{% for workflow in workflows %}
+### {{ workflow.name }}
+
+{{ workflow.description | normalize_acronyms }}
+
+```bash
+{% for step in workflow.steps %}
+# Step {{ step.step }}: {{ step.description }}
+{{ step.command }}
+{% endfor %}
+```
+
+{% endfor %}
+{% endif %}
+{% if exit_codes %}
+## Exit Codes
+
+The subscription commands use standard exit codes for CI/CD integration:
+
+| Code | Name | Description |
+|------|------|-------------|
+{% for code in exit_codes %}
+| {{ code.code }} | {{ code.name }} | {{ code.description | normalize_acronyms }} |
+{% endfor %}
+
+{% endif %}
+## See Also
+
+- [Command Reference](../index.md)
+{% for cmd in subcommands[:5] %}
+{% if cmd.subcommands %}- [xcsh subscription {{ cmd.path[-1] }}]({{ cmd.path[-1] }}/index.md)
+{% else %}- [xcsh subscription {{ cmd.path[-1] }}]({{ cmd.path[-1] }}.md)
+{% endif %}
+{% endfor %}
