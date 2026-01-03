@@ -679,6 +679,7 @@ jobs:
           echo "prereq_output<<EOFPREREQ" >> $GITHUB_OUTPUT
           echo "$PREREQ_OUTPUT" >> $GITHUB_OUTPUT
           echo "EOFPREREQ" >> $GITHUB_OUTPUT
+          echo "$PREREQ_OUTPUT" > $GITHUB_WORKSPACE/prereq-output.txt
 
           # Extract Node version for template
           NODE_VERSION_SHORT=$(echo "$NODE_VER" | sed 's/^v//')
@@ -701,6 +702,7 @@ jobs:
           echo "clone_output<<EOFCLONE" >> $GITHUB_OUTPUT
           echo "$CLONE_OUTPUT" >> $GITHUB_OUTPUT
           echo "EOFCLONE" >> $GITHUB_OUTPUT
+          echo "$CLONE_OUTPUT" > $GITHUB_WORKSPACE/clone-output.txt
 
           cd xcsh
 
@@ -715,6 +717,7 @@ jobs:
           echo "install_output<<EOFINSTALL" >> $GITHUB_OUTPUT
           echo "$INSTALL_OUTPUT" >> $GITHUB_OUTPUT
           echo "EOFINSTALL" >> $GITHUB_OUTPUT
+          echo "$INSTALL_OUTPUT" > $GITHUB_WORKSPACE/install-output-source.txt
 
           # Capture build output
           echo "Building xcsh..."
@@ -730,6 +733,7 @@ jobs:
           echo "build_output<<EOFBUILD" >> $GITHUB_OUTPUT
           echo "$BUILD_OUTPUT" >> $GITHUB_OUTPUT
           echo "EOFBUILD" >> $GITHUB_OUTPUT
+          echo "$BUILD_OUTPUT" > $GITHUB_WORKSPACE/build-output.txt
 
           # Capture version output
           echo "Verifying build..."
@@ -742,6 +746,7 @@ jobs:
           echo "version_output<<EOFVERSION" >> $GITHUB_OUTPUT
           echo "$VERSION_OUTPUT" >> $GITHUB_OUTPUT
           echo "EOFVERSION" >> $GITHUB_OUTPUT
+          echo "$VERSION_OUTPUT" > $GITHUB_WORKSPACE/version-output.txt
 
           # Cleanup
           cd /
@@ -754,11 +759,11 @@ jobs:
         run: |
           python scripts/generate-source-docs.py \
             --node-version "${{ steps.source-build.outputs.node_version }}" \
-            --prereq-output "${{ steps.source-build.outputs.prereq_output }}" \
-            --clone-output "${{ steps.source-build.outputs.clone_output }}" \
-            --install-output "${{ steps.source-build.outputs.install_output }}" \
-            --build-output "${{ steps.source-build.outputs.build_output }}" \
-            --version-output "${{ steps.source-build.outputs.version_output }}" \
+            --prereq-output "$(cat prereq-output.txt)" \
+            --clone-output "$(cat clone-output.txt)" \
+            --install-output "$(cat install-output-source.txt)" \
+            --build-output "$(cat build-output.txt)" \
+            --version-output "$(cat version-output.txt)" \
             --output docs/install/source.md
 
       - name: Generate command documentation
