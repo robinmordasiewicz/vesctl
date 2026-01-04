@@ -601,23 +601,19 @@ jobs:
             fi
             echo "  ✓ Notarization accepted"
 
-            # Staple the notarization ticket to the binary
-            # This embeds the ticket so users don't need to be online for Gatekeeper verification
-            echo "Stapling notarization ticket..."
-            xcrun stapler staple "$BINARY_PATH" || {
-              echo "::error::Stapling failed for $ARCH"
-              exit 1
-            }
-
-            # Health Check 5: Verify stapling succeeded
-            echo "Health Check 5: Verifying staple..."
-            STAPLE_CHECK=$(xcrun stapler validate "$BINARY_PATH" 2>&1)
-            if ! echo "$STAPLE_CHECK" | grep -q "The validate action worked"; then
-              echo "::error::Staple validation failed for $ARCH"
-              echo "$STAPLE_CHECK"
-              exit 1
+            # Attempt to staple the notarization ticket to the binary
+            # Note: Bare Mach-O command-line binaries (like xcsh) cannot be stapled (Error 73)
+            # Only .app bundles, .dmg, and .pkg files support stapling
+            # Without stapling, Gatekeeper will verify notarization online (requires network)
+            echo "Health Check 5: Attempting to staple notarization ticket..."
+            STAPLE_OUTPUT=$(xcrun stapler staple "$BINARY_PATH" 2>&1) || true
+            if echo "$STAPLE_OUTPUT" | grep -q "The staple and validate action worked"; then
+              echo "  ✓ Notarization ticket stapled successfully"
+            else
+              echo "  ⚠ Stapling not supported for bare Mach-O binaries (expected for CLI tools)"
+              echo "  Note: Binary is signed and notarized - Gatekeeper will verify online"
+              echo "  Stapler output: $STAPLE_OUTPUT"
             fi
-            echo "  ✓ Notarization ticket stapled"
 
             echo "✓ All health checks passed for $ARCH"
 
