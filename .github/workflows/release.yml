@@ -554,8 +554,30 @@ jobs:
 
             codesign --force --options runtime --entitlements scripts/entitlements.plist --sign "$SIGNING_IDENTITY" --timestamp "$BINARY_PATH"
 
-            # Verify signature
-            codesign --verify --verbose "$BINARY_PATH"
+            # Health Check 1: Verify code signature
+            echo "Health Check 1: Verifying code signature..."
+            codesign --verify --verbose "$BINARY_PATH" || {
+              echo "::error::Code signature verification failed for $ARCH"
+              exit 1
+            }
+
+            # Health Check 2: Verify Developer ID authority chain
+            echo "Health Check 2: Verifying Developer ID authority chain..."
+            AUTHORITY=$(codesign -dvvv "$BINARY_PATH" 2>&1 | grep "Authority=Developer ID Application" || true)
+            if [ -z "$AUTHORITY" ]; then
+              echo "::error::Binary not signed with Developer ID Application certificate"
+              exit 1
+            fi
+            echo "  ✓ Signed with: $AUTHORITY"
+
+            # Health Check 3: Verify hardened runtime is enabled
+            echo "Health Check 3: Verifying hardened runtime..."
+            FLAGS=$(codesign -dvvv "$BINARY_PATH" 2>&1 | grep "flags=" || true)
+            if ! echo "$FLAGS" | grep -q "runtime"; then
+              echo "::error::Hardened runtime not enabled"
+              exit 1
+            fi
+            echo "  ✓ Hardened runtime enabled"
 
             # Create ZIP for notarization
             ZIP_PATH="$RUNNER_TEMP/xcsh_${ARCH}.zip"
@@ -563,20 +585,41 @@ jobs:
 
             # Submit for notarization and wait for completion
             echo "Submitting for notarization..."
-            xcrun notarytool submit "$ZIP_PATH" \
+            NOTARY_OUTPUT=$(xcrun notarytool submit "$ZIP_PATH" \
               --apple-id "$APPLE_ID" \
               --password "$APPLE_PASSWORD" \
               --team-id "$APPLE_TEAM_ID" \
-              --wait
+              --wait 2>&1)
+            echo "$NOTARY_OUTPUT"
 
-            echo "Notarization complete for $ARCH (stapling skipped - not supported for bare binaries)"
+            # Health Check 4: Verify notarization succeeded
+            echo "Health Check 4: Verifying notarization status..."
+            if ! echo "$NOTARY_OUTPUT" | grep -q "status: Accepted"; then
+              echo "::error::Notarization failed or not accepted for $ARCH"
+              echo "$NOTARY_OUTPUT"
+              exit 1
+            fi
+            echo "  ✓ Notarization accepted"
 
-            # Verify the signed binary with spctl
-            echo "Verifying signed binary with spctl..."
-            spctl -a -vvv -t execute "$BINARY_PATH" || {
-              echo "WARNING: spctl verification may fail in CI (no GUI), continuing..."
+            # Staple the notarization ticket to the binary
+            # This embeds the ticket so users don't need to be online for Gatekeeper verification
+            echo "Stapling notarization ticket..."
+            xcrun stapler staple "$BINARY_PATH" || {
+              echo "::error::Stapling failed for $ARCH"
+              exit 1
             }
-            echo "Binary ready for $ARCH"
+
+            # Health Check 5: Verify stapling succeeded
+            echo "Health Check 5: Verifying staple..."
+            STAPLE_CHECK=$(xcrun stapler validate "$BINARY_PATH" 2>&1)
+            if ! echo "$STAPLE_CHECK" | grep -q "The validate action worked"; then
+              echo "::error::Staple validation failed for $ARCH"
+              echo "$STAPLE_CHECK"
+              exit 1
+            fi
+            echo "  ✓ Notarization ticket stapled"
+
+            echo "✓ All health checks passed for $ARCH"
 
             # Repackage as tar.gz
             cd $RUNNER_TEMP/sign_${ARCH}
