@@ -222,7 +222,7 @@ program
 				// https://github.com/oven-sh/bun/issues/6862
 				process.stdin.resume();
 				const appProps: AppProps = { initialSession: session };
-				render(<App {...appProps} />);
+				render(<App {...appProps} />, { exitOnCtrlC: false });
 				return;
 			}
 
