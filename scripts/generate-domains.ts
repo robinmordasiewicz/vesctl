@@ -32,26 +32,25 @@ interface SpecIndexEntry {
 	domain: string;
 	title: string;
 	description: string;
-	description_short: string; // ~60 chars for completions, badges
-	description_medium: string; // ~150 chars for tooltips, summaries
+	// x-f5xc-* extension fields (v2.0.2+ namespace)
+	"x-f5xc-description-short"?: string; // ~60 chars for completions, badges
+	"x-f5xc-description-medium"?: string; // ~150 chars for tooltips, summaries
 	file: string;
 	path_count: number;
 	schema_count: number;
-	complexity: string;
-	is_preview: boolean;
-	requires_tier: string;
-	domain_category: string;
-	use_cases: string[];
-	related_domains: string[];
-	aliases?: string[]; // Added in upstream spec (issue #178)
-	cli_metadata?: Record<string, unknown>;
+	"x-f5xc-complexity"?: string;
+	"x-f5xc-is-preview"?: boolean;
+	"x-f5xc-requires-tier"?: string;
+	"x-f5xc-category"?: string;
+	"x-f5xc-use-cases"?: string[];
+	"x-f5xc-related-domains"?: string[];
+	"x-f5xc-aliases"?: string[];
+	"x-f5xc-cli-metadata"?: Record<string, unknown>;
 	// Visual identity fields (from upstream enrichment)
-	icon?: string; // Emoji icon
-	logo_svg?: string; // SVG data URI
-	ui_category?: string; // UI grouping category
+	"x-f5xc-icon"?: string; // Emoji icon
+	"x-f5xc-logo-svg"?: string; // SVG data URI
 	// Rich resource metadata (from upstream enrichment)
-	primary_resources?: SpecPrimaryResource[];
-	primary_resources_simple?: string[]; // Simple list fallback
+	"x-f5xc-primary-resources"?: SpecPrimaryResource[];
 }
 
 interface SpecIndex {
@@ -106,7 +105,6 @@ interface DomainInfo {
 	// Visual identity fields
 	icon?: string;
 	logoSvg?: string;
-	uiCategory?: string;
 	// Rich resource metadata
 	primaryResources?: ResourceMetadata[];
 }
@@ -219,9 +217,6 @@ function generateDomainEntry(domain: DomainInfo): string {
 	if (domain.logoSvg) {
 		code += `\t\tlogoSvg: "${escapeString(domain.logoSvg)}",\n`;
 	}
-	if (domain.uiCategory) {
-		code += `\t\tuiCategory: "${escapeString(domain.uiCategory)}",\n`;
-	}
 
 	// Rich resource metadata
 	if (domain.primaryResources && domain.primaryResources.length > 0) {
@@ -273,7 +268,7 @@ async function main(): Promise<void> {
 
 	// Check if upstream specs include aliases
 	const hasUpstreamAliases = specIndex.specifications.some(
-		(spec) => spec.aliases && spec.aliases.length > 0,
+		(spec) => spec["x-f5xc-aliases"] && spec["x-f5xc-aliases"].length > 0,
 	);
 	if (hasUpstreamAliases) {
 		console.log("✓ Using aliases from upstream specs");
@@ -296,13 +291,13 @@ async function main(): Promise<void> {
 		}
 
 		// Prefer upstream aliases, fallback to local config
-		const aliases = spec.aliases?.length
-			? spec.aliases
+		const aliases = spec["x-f5xc-aliases"]?.length
+			? spec["x-f5xc-aliases"]
 			: config.aliases?.[spec.domain] || [];
 
 		// Transform primary_resources from upstream format to internal format
 		const primaryResources: ResourceMetadata[] | undefined =
-			spec.primary_resources?.map((r) => ({
+			spec["x-f5xc-primary-resources"]?.map((r) => ({
 				name: r.name,
 				description: r.description || "",
 				descriptionShort: r.description_short || "",
@@ -319,20 +314,19 @@ async function main(): Promise<void> {
 			name: spec.domain,
 			displayName: titleCase(spec.domain),
 			description: spec.description,
-			descriptionShort: spec.description_short,
-			descriptionMedium: spec.description_medium,
+			descriptionShort: spec["x-f5xc-description-short"] || "",
+			descriptionMedium: spec["x-f5xc-description-medium"] || "",
 			aliases,
-			complexity: spec.complexity || "moderate",
-			isPreview: spec.is_preview || false,
-			requiresTier: spec.requires_tier || "Standard",
-			category: spec.domain_category || "Other",
-			useCases: spec.use_cases || [],
-			relatedDomains: spec.related_domains || [],
-			cliMetadata: spec.cli_metadata,
+			complexity: spec["x-f5xc-complexity"] || "moderate",
+			isPreview: spec["x-f5xc-is-preview"] || false,
+			requiresTier: spec["x-f5xc-requires-tier"] || "Standard",
+			category: spec["x-f5xc-category"] || "Other",
+			useCases: spec["x-f5xc-use-cases"] || [],
+			relatedDomains: spec["x-f5xc-related-domains"] || [],
+			cliMetadata: spec["x-f5xc-cli-metadata"],
 			// Visual identity fields
-			icon: spec.icon,
-			logoSvg: spec.logo_svg,
-			uiCategory: spec.ui_category,
+			icon: spec["x-f5xc-icon"],
+			logoSvg: spec["x-f5xc-logo-svg"],
 			// Rich resource metadata
 			primaryResources,
 		};

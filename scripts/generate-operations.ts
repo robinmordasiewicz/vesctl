@@ -56,9 +56,9 @@ interface OpenAPIOperation {
 	operationId?: string;
 	tags?: string[];
 	externalDocs?: ExternalDocs;
-	"x-ves-danger-level"?: string;
-	"x-ves-namespace-scope"?: string | null;
-	"x-ves-operation-metadata"?: OperationMetadata;
+	"x-f5xc-danger-level"?: string;
+	"x-f5xc-namespace-scope"?: string | null;
+	"x-f5xc-operation-metadata"?: OperationMetadata;
 }
 
 interface OpenAPIPathItem {
@@ -76,7 +76,7 @@ interface OpenAPISpec {
 		title: string;
 		description: string;
 		version: string;
-		"x-ves-cli-domain"?: string;
+		"x-f5xc-cli-domain"?: string;
 	};
 	paths: Record<string, OpenAPIPathItem>;
 	tags?: Array<{
@@ -209,7 +209,7 @@ function processSpec(specPath: string): DomainOperations | null {
 	const content = fs.readFileSync(specPath, "utf-8");
 	const spec: OpenAPISpec = JSON.parse(content);
 
-	const domain = spec.info["x-ves-cli-domain"] || path.basename(specPath, ".json");
+	const domain = spec.info["x-f5xc-cli-domain"] || path.basename(specPath, ".json");
 	const operations: OperationInfo[] = [];
 	const resourceTypesSet = new Set<string>();
 
@@ -244,7 +244,7 @@ function processSpec(specPath: string): DomainOperations | null {
 			};
 
 			// Extract operation metadata if available
-			const metadata = operation["x-ves-operation-metadata"];
+			const metadata = operation["x-f5xc-operation-metadata"];
 			if (metadata) {
 				if (metadata.purpose) {
 					opInfo.purpose = metadata.purpose;
@@ -278,14 +278,14 @@ function processSpec(specPath: string): DomainOperations | null {
 				}
 			}
 
-			// Extract x-ves-danger-level (top-level takes precedence if present)
-			if (operation["x-ves-danger-level"]) {
-				opInfo.dangerLevel = operation["x-ves-danger-level"] as "low" | "medium" | "high";
+			// Extract x-f5xc-danger-level (top-level takes precedence if present)
+			if (operation["x-f5xc-danger-level"]) {
+				opInfo.dangerLevel = operation["x-f5xc-danger-level"] as "low" | "medium" | "high";
 			}
 
-			// Extract x-ves-namespace-scope
-			if (operation["x-ves-namespace-scope"] !== undefined) {
-				opInfo.namespaceScope = operation["x-ves-namespace-scope"] as "system" | "shared" | "any" | null;
+			// Extract x-f5xc-namespace-scope
+			if (operation["x-f5xc-namespace-scope"] !== undefined) {
+				opInfo.namespaceScope = operation["x-f5xc-namespace-scope"] as "system" | "shared" | "any" | null;
 			}
 
 			// Extract externalDocs
@@ -534,7 +534,7 @@ export interface OperationInfo {
 	summary: string;
 	/** Full description from OpenAPI */
 	description: string;
-	/** Purpose from x-ves-operation-metadata (if available) */
+	/** Purpose from x-f5xc-operation-metadata (if available) */
 	purpose?: string;
 	/** API path pattern */
 	path: string;

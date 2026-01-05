@@ -45,7 +45,7 @@ export interface OperationInfo {
 	summary: string;
 	/** Full description from OpenAPI */
 	description: string;
-	/** Purpose from x-ves-operation-metadata (if available) */
+	/** Purpose from x-f5xc-operation-metadata (if available) */
 	purpose?: string;
 	/** API path pattern */
 	path: string;

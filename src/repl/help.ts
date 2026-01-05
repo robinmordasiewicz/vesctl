@@ -333,7 +333,7 @@ export function formatActionHelp(domainName: string, action: string): string[] {
 	output.push(`  ${desc}`);
 	output.push("");
 
-	// Add purpose from x-ves-operation-metadata if available
+	// Add purpose from x-f5xc-operation-metadata if available
 	if (opInfo?.purpose) {
 		output.push("PURPOSE");
 		output.push(`  ${opInfo.purpose}`);
