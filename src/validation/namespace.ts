@@ -2,7 +2,7 @@
  * Namespace Scope Validation
  *
  * Validates operations against namespace scope requirements from enriched upstream specs.
- * Uses the x-ves-namespace-scope field to determine if an operation is valid
+ * Uses the x-f5xc-namespace-scope field to determine if an operation is valid
  * for the current namespace context.
  */
 

@@ -9,7 +9,7 @@
  * - Generic descriptions matching "F5 Distributed Cloud {Domain} API specifications"
  * - Missing 3-tier differentiation (description_short = description)
  * - Auto-generated summaries matching "{Action} {Resource}."
- * - Missing x-ves-operation-metadata
+ * - Missing x-f5xc-operation-metadata
  *
  * Output: Markdown report for creating GitHub issues in upstream repo
  *
@@ -37,7 +37,7 @@ interface OpenAPIOperation {
 	summary?: string;
 	description?: string;
 	operationId?: string;
-	"x-ves-operation-metadata"?: {
+	"x-f5xc-operation-metadata"?: {
 		purpose?: string;
 	};
 }
@@ -226,9 +226,9 @@ function analyzeOperationDescriptions(specsDir: string): OperationGap[] {
 					issues.push("Description missing or too short");
 				}
 
-				// Check for missing x-ves-operation-metadata
-				if (!operation["x-ves-operation-metadata"]?.purpose) {
-					issues.push("Missing x-ves-operation-metadata.purpose");
+				// Check for missing x-f5xc-operation-metadata
+				if (!operation["x-f5xc-operation-metadata"]?.purpose) {
+					issues.push("Missing x-f5xc-operation-metadata.purpose");
 				}
 
 				if (issues.length > 0) {
@@ -346,7 +346,7 @@ function generateReport(
 	lines.push("### For Upstream Repository (f5xc-api-enriched)");
 	lines.push("");
 	lines.push("1. **High severity domains** should be prioritized for description improvement");
-	lines.push("2. Add `x-ves-operation-metadata.purpose` to operations missing it");
+	lines.push("2. Add `x-f5xc-operation-metadata.purpose` to operations missing it");
 	lines.push("3. Ensure 3-tier descriptions are properly differentiated:");
 	lines.push("   - `description_short`: ~60 characters, action-oriented");
 	lines.push("   - `description_medium`: ~150 characters, adds context");
