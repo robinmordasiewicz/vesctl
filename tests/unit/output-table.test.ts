@@ -557,3 +557,102 @@ describe("Edge cases", () => {
 		expect(result).toContain('{"key":"value"}');
 	});
 });
+
+describe("Tree formatting for complex values", () => {
+	beforeEach(() => {
+		vi.stubEnv("NO_COLOR", "1");
+	});
+
+	afterEach(() => {
+		vi.unstubAllEnvs();
+	});
+
+	it("formats nested objects as indented tree in key-value box", () => {
+		const data = [
+			{
+				label: "config",
+				value:
+					"level1:\n  level2:\n    value: deep",
+			},
+		];
+		const result = formatKeyValueBox(data, "Test", true);
+
+		// Should contain the tree-formatted content
+		expect(result).toContain("level1:");
+		expect(result).toContain("level2:");
+		expect(result).toContain("value: deep");
+	});
+
+	it("aligns continuation lines properly for multi-line values", () => {
+		const data = [
+			{
+				label: "api_spec",
+				value: "definition:\n  name: test\n  namespace: default",
+			},
+		];
+		const result = formatKeyValueBox(data, "Test", true);
+		const lines = result.split("\n");
+
+		// All content lines should have consistent border structure
+		const contentLines = lines.filter(
+			(l) => l.includes("|") && !l.includes("+") && !l.includes("-"),
+		);
+		for (const line of contentLines) {
+			expect(line.startsWith("|")).toBe(true);
+			expect(line.trimEnd().endsWith("|")).toBe(true);
+		}
+	});
+
+	it("handles complex nested objects in formatKeyValueBox", () => {
+		const data = [
+			{ label: "name", value: "test-resource" },
+			{
+				label: "config",
+				value: "tls:\n  enabled: true\n  cert:\n    path: /etc/ssl",
+			},
+		];
+		const result = formatKeyValueBox(data, "Resource", true);
+
+		expect(result).toContain("Resource");
+		expect(result).toContain("test-resource");
+		expect(result).toContain("tls:");
+		expect(result).toContain("enabled: true");
+	});
+
+	it("handles complex objects in table cells with tree formatting", () => {
+		const columns: ColumnDefinition[] = [
+			{ header: "NAME", accessor: "name" },
+			{ header: "CONFIG", accessor: "config" },
+		];
+		// Complex nested object (>3 levels deep)
+		const data = [
+			{
+				name: "test",
+				config: {
+					level1: {
+						level2: {
+							value: "nested",
+						},
+					},
+				},
+			},
+		];
+		const result = formatBeautifulTable(data, { columns }, true);
+
+		// Should contain tree-formatted output (with newlines shown as separate rows)
+		expect(result).toContain("level1:");
+	});
+
+	it("keeps simple objects as inline JSON", () => {
+		const columns: ColumnDefinition[] = [
+			{ header: "NAME", accessor: "name" },
+			{ header: "SIMPLE", accessor: "simple" },
+		];
+		// Simple object with no nesting
+		const data = [{ name: "test", simple: { a: 1, b: 2 } }];
+		const result = formatBeautifulTable(data, { columns }, true);
+
+		// Simple object should stay as JSON
+		expect(result).toContain('{"a":1,"b":2}');
+	});
+});
