@@ -31,7 +31,7 @@ spec:
 **Create command:**
 
 ```bash
-xcsh cdn create http_loadbalancer -n shared -i http-lb.yaml
+xcsh virtual create http_loadbalancer -ns shared -f http-lb.yaml
 ```
 
 ## CRUD Quick Reference
@@ -39,31 +39,31 @@ xcsh cdn create http_loadbalancer -n shared -i http-lb.yaml
 ### Create
 
 ```bash
-xcsh cdn create http_loadbalancer -n <namespace> -i <file.yaml>
+xcsh virtual create http_loadbalancer -ns <namespace> -f <file.yaml>
 ```
 
 ### Read (List)
 
 ```bash
-xcsh cdn list http_loadbalancer -n <namespace> --output-format json
+xcsh virtual list http_loadbalancer -ns <namespace> -o json
 ```
 
 ### Read (Get)
 
 ```bash
-xcsh cdn get http_loadbalancer <name> -n <namespace> --output-format yaml
+xcsh virtual get http_loadbalancer <name> -ns <namespace> -o yaml
 ```
 
 ### Update (Replace)
 
 ```bash
-xcsh cdn replace http_loadbalancer <name> -n <namespace> -i <file.yaml>
+xcsh virtual replace http_loadbalancer <name> -ns <namespace> -f <file.yaml>
 ```
 
 ### Delete
 
 ```bash
-xcsh cdn delete http_loadbalancer <name> -n <namespace>
+xcsh virtual delete http_loadbalancer <name> -ns <namespace>
 ```
 
 ## HTTP Load Balancer
@@ -108,13 +108,13 @@ spec:
 
 ```bash
 # Create origin pool
-xcsh cdn create origin_pool -n example-namespace -i origin-pool.yaml
+xcsh virtual create origin_pool -ns example-namespace -f origin-pool.yaml
 
 # Create load balancer
-xcsh cdn create http_loadbalancer -n example-namespace -i http-lb.yaml
+xcsh virtual create http_loadbalancer -ns example-namespace -f http-lb.yaml
 
 # Verify
-xcsh cdn get http_loadbalancer example-http-lb -n example-namespace
+xcsh virtual get http_loadbalancer example-http-lb -ns example-namespace
 ```
 
 ### HTTPS Load Balancer
@@ -186,7 +186,7 @@ spec:
 **Deploy:**
 
 ```bash
-xcsh virtual create tcp_loadbalancer -n example-namespace -i tcp-lb.yaml
+xcsh virtual create tcp_loadbalancer -ns example-namespace -f tcp-lb.yaml
 ```
 
 ## Health Checks
@@ -268,43 +268,42 @@ spec:
 
 ```bash
 # List all HTTP load balancers
-xcsh cdn list http_loadbalancer -n example-namespace
+xcsh virtual list http_loadbalancer -ns example-namespace
 
 # List all TCP load balancers
-xcsh virtual list tcp_loadbalancer -n example-namespace
+xcsh virtual list tcp_loadbalancer -ns example-namespace
 
 # Output as JSON
-xcsh cdn list http_loadbalancer -n example-namespace --output-format json
+xcsh virtual list http_loadbalancer -ns example-namespace -o json
 ```
 
 ### Get Details
 
 ```bash
 # Get as table (default)
-xcsh cdn get http_loadbalancer example-lb -n example-namespace
+xcsh virtual get http_loadbalancer example-lb -ns example-namespace
 
 # Get as YAML
-xcsh cdn get http_loadbalancer example-lb -n example-namespace --output-format yaml
+xcsh virtual get http_loadbalancer example-lb -ns example-namespace -o yaml
 
 # Get as JSON
-xcsh cdn get http_loadbalancer example-lb -n example-namespace --output-format json
+xcsh virtual get http_loadbalancer example-lb -ns example-namespace -o json
 ```
 
 ### Update Load Balancer
 
 ```bash
 # Export current config
-xcsh cdn get http_loadbalancer example-lb -n example-namespace --output-format yaml > lb.yaml
+xcsh virtual get http_loadbalancer example-lb -ns example-namespace -o yaml > lb.yaml
 
 # Edit lb.yaml...
 
-# Apply changes (requires confirmation)
-xcsh cdn replace http_loadbalancer example-lb -n example-namespace -i lb.yaml
+# Apply changes
+xcsh virtual replace http_loadbalancer example-lb -ns example-namespace -f lb.yaml
 ```
 
 ### Delete Load Balancer
 
 ```bash
-# With confirmation prompt
-xcsh cdn delete http_loadbalancer example-lb -n example-namespace
+xcsh virtual delete http_loadbalancer example-lb -ns example-namespace
 ```
