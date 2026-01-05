@@ -32,13 +32,13 @@ spec:
 
 ```bash
 # Create cloud credentials first
-xcsh <domain> create cloud_credentials -i aws-creds.yaml -n system
+xcsh cloud_infrastructure create cloud_credentials -f aws-creds.yaml -ns system
 
 # Create site
-xcsh <domain> create aws_vpc_site -i aws-vpc-site.yaml -n system
+xcsh cloud_infrastructure create aws_vpc_site -f aws-vpc-site.yaml -ns system
 
 # Check status
-xcsh <domain> get aws_vpc_site example-aws-site -n system
+xcsh cloud_infrastructure get aws_vpc_site example-aws-site -ns system
 ```
 
 ### AWS Site with Multiple Nodes
@@ -100,10 +100,10 @@ spec:
 
 ```bash
 # Create cloud credentials
-xcsh <domain> create cloud_credentials -i azure-creds.yaml -n system
+xcsh cloud_infrastructure create cloud_credentials -f azure-creds.yaml -ns system
 
 # Create site
-xcsh <domain> create azure_vnet_site -i azure-vnet-site.yaml -n system
+xcsh cloud_infrastructure create azure_vnet_site -f azure-vnet-site.yaml -ns system
 ```
 
 ## Cloud Credentials
@@ -148,37 +148,37 @@ spec:
 
 ```bash
 # List AWS sites
-xcsh <domain> list aws_vpc_site -n system
+xcsh cloud_infrastructure list aws_vpc_site -ns system
 
 # List Azure sites
-xcsh <domain> list azure_vnet_site -n system
+xcsh cloud_infrastructure list azure_vnet_site -ns system
 ```
 
 ### Get Site Details
 
 ```bash
 # Get AWS site
-xcsh <domain> get aws_vpc_site example-aws-site -n system --outfmt yaml
+xcsh cloud_infrastructure get aws_vpc_site example-aws-site -ns system -o yaml
 
 # Get Azure site
-xcsh <domain> get azure_vnet_site example-azure-site -n system --outfmt yaml
+xcsh cloud_infrastructure get azure_vnet_site example-azure-site -ns system -o yaml
 ```
 
 ### Site Status
 
 ```bash
 # Check site registration status
-xcsh site status example-aws-site -n system
+xcsh sites status site example-aws-site -ns system
 ```
 
 ### Delete Site
 
 ```bash
 # Delete AWS site
-xcsh <domain> delete aws_vpc_site example-aws-site -n system --yes
+xcsh cloud_infrastructure delete aws_vpc_site example-aws-site -ns system
 
 # Delete Azure site
-xcsh <domain> delete azure_vnet_site example-azure-site -n system --yes
+xcsh cloud_infrastructure delete azure_vnet_site example-azure-site -ns system
 ```
 
 ## Troubleshooting
@@ -186,22 +186,22 @@ xcsh <domain> delete azure_vnet_site example-azure-site -n system --yes
 ### Check Site Status
 
 ```bash
-xcsh <domain> get aws_vpc_site example-site -n system --outfmt json | jq '.status'
+xcsh cloud_infrastructure get aws_vpc_site example-site -ns system -o json | jq '.status'
 ```
 
 ### List All Cloud Resources
 
 ```bash
 # List all cloud credentials
-xcsh <domain> list cloud_credentials -n system
+xcsh cloud_infrastructure list cloud_credentials -ns system
 
 # List all sites
-xcsh <domain> list aws_vpc_site -n system
-xcsh <domain> list azure_vnet_site -n system
+xcsh cloud_infrastructure list aws_vpc_site -ns system
+xcsh cloud_infrastructure list azure_vnet_site -ns system
 ```
 
-### Debug Mode
+### Verbose Output
 
 ```bash
-xcsh --debug configuration get aws_vpc_site example-site -n system
+xcsh cloud_infrastructure get aws_vpc_site example-site -ns system -o json
 ```

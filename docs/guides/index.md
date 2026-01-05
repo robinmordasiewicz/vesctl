@@ -15,7 +15,7 @@ Real-world examples for common xcsh use cases.
 ### List All Namespaces
 
 ```bash
-xcsh identity list namespace
+xcsh tenant_and_identity list namespace
 ```
 
 **Output:**
@@ -23,36 +23,37 @@ xcsh identity list namespace
 ```text
 NAME           DESCRIPTION
 default        Default namespace
-example-namespace   My application namespace
+shared         Shared namespace
 system         System namespace
 ```
 
 ### Create Resource from File
 
 ```bash
-xcsh load_balancer create http_loadbalancer -i lb.yaml
+xcsh virtual create http_loadbalancer -f lb.yaml
 ```
 
 ### Get Resource as YAML
 
 ```bash
-xcsh <domain> get namespace example-namespace --outfmt yaml
+xcsh virtual get http_loadbalancer example-lb -o yaml
 ```
 
 **Output:**
 
 ```yaml
 metadata:
-  name: example-namespace
-  uid: abc123
+  name: example-lb
+  namespace: default
 spec:
-  description: My application namespace
+  domains:
+    - example.com
 ```
 
 ### Delete Resource
 
 ```bash
-xcsh load_balancer delete http_loadbalancer example-lb -n example-namespace --yes
+xcsh virtual delete http_loadbalancer example-lb -ns example-namespace
 ```
 
 ## Common Workflows
@@ -62,25 +63,25 @@ xcsh load_balancer delete http_loadbalancer example-lb -n example-namespace --ye
 1. Create an origin pool:
 
 ```bash
-xcsh load_balancer create origin_pool -i origin-pool.yaml
+xcsh virtual create origin_pool -f origin-pool.yaml
 ```
 
 2. Create a health check:
 
 ```bash
-xcsh <domain> create healthcheck -i healthcheck.yaml
+xcsh virtual create healthcheck -f healthcheck.yaml
 ```
 
 3. Create the load balancer:
 
 ```bash
-xcsh load_balancer create http_loadbalancer -i lb.yaml
+xcsh virtual create http_loadbalancer -f lb.yaml
 ```
 
 4. Verify deployment:
 
 ```bash
-xcsh load_balancer get http_loadbalancer example-lb -n example-namespace
+xcsh virtual get http_loadbalancer example-lb -ns example-namespace
 ```
 
 ### Update Configuration
@@ -88,7 +89,7 @@ xcsh load_balancer get http_loadbalancer example-lb -n example-namespace
 1. Export current configuration:
 
 ```bash
-xcsh load_balancer get http_loadbalancer example-lb -n example-namespace --outfmt yaml > lb.yaml
+xcsh virtual get http_loadbalancer example-lb -ns example-namespace -o yaml > lb.yaml
 ```
 
 2. Edit the file as needed
@@ -96,18 +97,18 @@ xcsh load_balancer get http_loadbalancer example-lb -n example-namespace --outfm
 3. Apply changes:
 
 ```bash
-xcsh load_balancer replace http_loadbalancer -i lb.yaml
+xcsh virtual replace http_loadbalancer example-lb -ns example-namespace -f lb.yaml
 ```
 
 ### Cleanup Resources
 
 ```bash
 # Delete load balancer
-xcsh load_balancer delete http_loadbalancer example-lb -n example-namespace --yes
+xcsh virtual delete http_loadbalancer example-lb -ns example-namespace
 
 # Delete origin pool
-xcsh <domain> delete origin_pool example-pool -n example-namespace --yes
+xcsh virtual delete origin_pool example-pool -ns example-namespace
 
 # Delete health check
-xcsh <domain> delete healthcheck example-hc -n example-namespace --yes
+xcsh virtual delete healthcheck example-hc -ns example-namespace
 ```
