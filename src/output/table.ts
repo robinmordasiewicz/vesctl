@@ -131,6 +131,10 @@ function getValue(
 		if (accessor === "labels") {
 			return formatLabelsValue(value as Record<string, unknown>);
 		}
+		// Use tree formatting for complex values in table cells
+		if (isComplexValue(value)) {
+			return formatIndentedTree(value, 0, 4, 40).join("\n");
+		}
 		return JSON.stringify(value);
 	}
 	return String(value);
@@ -149,6 +153,213 @@ function formatLabelsValue(labels: Record<string, unknown>): string {
 	}
 
 	return `map[${entries.join(" ")}]`;
+}
+
+/**
+ * Check if a value is complex enough to warrant tree formatting
+ * Complex = nested objects, arrays with objects, or objects with >3 keys
+ */
+function isComplexValue(value: unknown): boolean {
+	if (value === null || value === undefined) return false;
+	if (typeof value !== "object") return false;
+
+	if (Array.isArray(value)) {
+		// Array with any objects inside is complex
+		return value.some((item) => typeof item === "object" && item !== null);
+	}
+
+	// Object - check if any values are objects/arrays
+	const obj = value as Record<string, unknown>;
+	const keys = Object.keys(obj);
+
+	// Object with more than 3 keys is complex
+	if (keys.length > 3) return true;
+
+	// Check if any child is an object/array
+	return keys.some((k) => {
+		const v = obj[k];
+		return typeof v === "object" && v !== null;
+	});
+}
+
+/**
+ * Format a complex value as an indented tree structure
+ * @param value - The value to format (object or array)
+ * @param indent - Current indentation level (number of spaces)
+ * @param maxDepth - Maximum nesting depth before falling back to JSON
+ * @param maxWidth - Maximum width for values before truncating
+ * @returns Array of lines representing the tree structure
+ */
+function formatIndentedTree(
+	value: unknown,
+	indent: number = 0,
+	maxDepth: number = 6,
+	maxWidth: number = 60,
+): string[] {
+	const INDENT_SIZE = 2;
+	const lines: string[] = [];
+
+	// Base cases
+	if (value === null) {
+		return ["null"];
+	}
+	if (value === undefined) {
+		return [""];
+	}
+	if (
+		typeof value === "string" ||
+		typeof value === "number" ||
+		typeof value === "boolean"
+	) {
+		return [String(value)];
+	}
+
+	// Depth limit check - fall back to compact JSON
+	if (indent / INDENT_SIZE >= maxDepth) {
+		const json = JSON.stringify(value);
+		return json.length > maxWidth
+			? [json.slice(0, maxWidth - 3) + "..."]
+			: [json];
+	}
+
+	// Handle arrays
+	if (Array.isArray(value)) {
+		// Empty array
+		if (value.length === 0) {
+			return ["[]"];
+		}
+		// Simple array of primitives - show inline
+		const isSimple = value.every(
+			(v) =>
+				typeof v === "string" ||
+				typeof v === "number" ||
+				typeof v === "boolean" ||
+				v === null,
+		);
+		if (isSimple && value.length <= 5) {
+			const inline = `[${value.map((v) => (v === null ? "null" : String(v))).join(", ")}]`;
+			if (inline.length <= maxWidth) {
+				return [inline];
+			}
+		}
+		// Complex array - format each item
+		for (let i = 0; i < value.length; i++) {
+			const item = value[i];
+			const prefix = `[${i}]: `;
+			if (typeof item === "object" && item !== null) {
+				lines.push(prefix);
+				const subLines = formatIndentedTree(
+					item,
+					indent + INDENT_SIZE,
+					maxDepth,
+					maxWidth,
+				);
+				for (const subLine of subLines) {
+					lines.push(" ".repeat(INDENT_SIZE) + subLine);
+				}
+			} else {
+				const formatted = formatIndentedTree(
+					item,
+					indent,
+					maxDepth,
+					maxWidth,
+				);
+				lines.push(prefix + formatted[0]);
+			}
+		}
+		return lines;
+	}
+
+	// Handle objects
+	if (typeof value === "object") {
+		const obj = value as Record<string, unknown>;
+		const keys = Object.keys(obj);
+
+		// Empty object
+		if (keys.length === 0) {
+			return ["{}"];
+		}
+
+		// Small object with only simple values - try inline format
+		if (keys.length <= 2) {
+			const allSimple = keys.every((k) => {
+				const v = obj[k];
+				return (
+					v === null ||
+					typeof v === "string" ||
+					typeof v === "number" ||
+					typeof v === "boolean" ||
+					(typeof v === "object" &&
+						v !== null &&
+						Object.keys(v).length === 0)
+				);
+			});
+			if (allSimple) {
+				const inline = keys
+					.map((k) => {
+						const v = obj[k];
+						if (v === null) return `${k}: null`;
+						if (
+							typeof v === "object" &&
+							Object.keys(v as object).length === 0
+						) {
+							return Array.isArray(v) ? `${k}: []` : `${k}: {}`;
+						}
+						return `${k}: ${v}`;
+					})
+					.join(", ");
+				if (inline.length <= maxWidth) {
+					return [inline];
+				}
+			}
+		}
+
+		// Format each key-value pair
+		for (const key of keys) {
+			const childValue = obj[key];
+
+			// Check if child is a complex object/array
+			if (typeof childValue === "object" && childValue !== null) {
+				const childObj = childValue as
+					| Record<string, unknown>
+					| unknown[];
+				const isEmpty = Array.isArray(childObj)
+					? childObj.length === 0
+					: Object.keys(childObj).length === 0;
+
+				if (isEmpty) {
+					// Empty object/array - show inline
+					lines.push(
+						`${key}: ${Array.isArray(childObj) ? "[]" : "{}"}`,
+					);
+				} else {
+					// Complex child - put key on its own line, indent children
+					lines.push(`${key}:`);
+					const subLines = formatIndentedTree(
+						childValue,
+						indent + INDENT_SIZE,
+						maxDepth,
+						maxWidth,
+					);
+					for (const subLine of subLines) {
+						lines.push(" ".repeat(INDENT_SIZE) + subLine);
+					}
+				}
+			} else {
+				// Simple value - inline with key
+				const formatted = formatIndentedTree(
+					childValue,
+					indent,
+					maxDepth,
+					maxWidth,
+				);
+				lines.push(`${key}: ${formatted[0]}`);
+			}
+		}
+		return lines;
+	}
+
+	return [String(value)];
 }
 
 /**
@@ -455,21 +666,31 @@ export function formatKeyValueBox(
 		effectiveMaxWidth - maxLabelWidth - boxOverhead,
 	);
 
-	// Format content lines with value wrapping
+	// Format content lines with value wrapping and multi-line support
 	const contentLines: string[] = [];
 	for (const d of data) {
 		const paddedLabel = d.label.padEnd(maxLabelWidth);
-
-		// Wrap value if it exceeds max width
-		const wrappedValueLines = wrapText(d.value, maxValueWidth);
-
-		// First line includes the label
-		contentLines.push(`${paddedLabel}:  ${wrappedValueLines[0] ?? ""}`);
-
-		// Continuation lines are indented to align with value column
 		const indent = " ".repeat(maxLabelWidth + 3); // align with value after ":  "
-		for (let i = 1; i < wrappedValueLines.length; i++) {
-			contentLines.push(`${indent}${wrappedValueLines[i]}`);
+
+		// Split value by newlines first (for tree-formatted values)
+		const valueLines = d.value.split("\n");
+
+		// Process each line of the value
+		let isFirstLine = true;
+		for (const valueLine of valueLines) {
+			// Wrap each line if it exceeds max width
+			const wrappedLines = wrapText(valueLine, maxValueWidth);
+
+			for (const wrappedLine of wrappedLines) {
+				if (isFirstLine) {
+					// First line includes the label
+					contentLines.push(`${paddedLabel}:  ${wrappedLine}`);
+					isFirstLine = false;
+				} else {
+					// Continuation lines are indented to align with value column
+					contentLines.push(`${indent}${wrappedLine}`);
+				}
+			}
 		}
 	}
 
@@ -568,8 +789,8 @@ function formatDetailValue(value: unknown): string {
 		if (isSimple && value.length <= 5) {
 			return `[${value.join(", ")}]`;
 		}
-		// Complex array - show as JSON
-		return JSON.stringify(value);
+		// Complex array - use tree format
+		return formatIndentedTree(value, 0, 6, 60).join("\n");
 	}
 
 	if (typeof value === "object") {
@@ -592,8 +813,8 @@ function formatDetailValue(value: unknown): string {
 			}
 		}
 
-		// Complex object - show as JSON
-		return JSON.stringify(value);
+		// Complex object - use tree format
+		return formatIndentedTree(value, 0, 6, 60).join("\n");
 	}
 
 	return String(value);
