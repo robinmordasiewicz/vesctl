@@ -2,6 +2,8 @@
 
 F5 Distributed Cloud Shell - A command-line interface for managing F5 Distributed Cloud resources.
 
+**API Version:** v2.0.21
+
 ## Documentation
 
 Full documentation is available at **[robinmordasiewicz.github.io/f5xc-xcsh](https://robinmordasiewicz.github.io/f5xc-xcsh)**
@@ -35,15 +37,15 @@ xcsh <domain> <operation> <resource-type> [resource-name] [flags]
 
 Common domains include:
 
-| Domain | Purpose |
-|--------|---------|
-| `virtual` | HTTP, TCP, UDP load balancers and origin pools |
-| `cloud_infrastructure` | AWS, Azure, GCP cloud sites and credentials |
-| `waf` | Web application firewalls and security policies |
-| `dns` | DNS zones and load balancing |
-| `sites` | Site management and virtual sites |
-| `tenant_and_identity` | User profiles and sessions |
-| `ai_services` | AI assistant for natural language queries |
+| Domain                 | Purpose                                         |
+| ---------------------- | ----------------------------------------------- |
+| `virtual`              | HTTP, TCP, UDP load balancers and origin pools  |
+| `cloud_infrastructure` | AWS, Azure, GCP cloud sites and credentials     |
+| `waf`                  | Web application firewalls and security policies |
+| `dns`                  | DNS zones and load balancing                    |
+| `sites`                | Site management and virtual sites               |
+| `tenant_and_identity`  | User profiles and sessions                      |
+| `ai_services`          | AI assistant for natural language queries       |
 
 ### Examples
 
