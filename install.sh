@@ -1043,7 +1043,7 @@ On Alpine:        apk add curl"
   printf "  # Start interactive shell\n"
   printf "  ${CYAN}xcsh${NC}\n"
   printf "  ${CYAN}xcsh --help${NC}\n"
-  printf "  ${CYAN}xcsh login profile create my-tenant \\${NC}\n"
+  printf "  ${CYAN}xcsh login profile create my-tenant${NC} %s\n" '\'
   printf "    ${CYAN}--url https://my-tenant.console.ves.volterra.io${NC}\n"
   printf "\n"
   printf "%s\n" "Documentation: https://github.com/${GITHUB_REPO}"
