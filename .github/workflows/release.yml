@@ -129,7 +129,10 @@ jobs:
         run: ./scripts/download-specs.sh
 
       - name: Build TypeScript
-        run: XCSH_VERSION=${{ needs.version.outputs.version }} npm run build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          XCSH_VERSION: ${{ needs.version.outputs.version }}
+        run: npm run build
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
@@ -171,7 +174,10 @@ jobs:
         run: ./scripts/download-specs.sh
 
       - name: Build TypeScript
-        run: XCSH_VERSION=${{ needs.version.outputs.version }} npm run build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          XCSH_VERSION: ${{ needs.version.outputs.version }}
+        run: npm run build
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
@@ -215,9 +221,10 @@ jobs:
 
       - name: Build TypeScript
         shell: bash
-        run: npm run build
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           XCSH_VERSION: ${{ needs.version.outputs.version }}
+        run: npm run build
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
