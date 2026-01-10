@@ -10,25 +10,50 @@
  *   xcsh --version          # Show version
  */
 
+// Startup profiling - capture the very first moment
+const _startupTime = Date.now();
+const _profile = (label: string) => {
+	if (process.env.XCSH_PROFILE === "true") {
+		console.error(`[STARTUP] ${label}: ${Date.now() - _startupTime}ms`);
+	}
+};
+_profile("script:start");
+
 import { render } from "ink";
+_profile("import:ink");
 import { Command } from "commander";
+_profile("import:commander");
 import { App, type AppProps } from "./repl/index.js";
+_profile("import:repl");
 import { CLI_NAME, CLI_VERSION, colors, ENV_PREFIX } from "./branding/index.js";
+_profile("import:branding");
 import { executeCommand } from "./repl/executor.js";
+_profile("import:executor");
 import { REPLSession } from "./repl/session.js";
+_profile("import:session");
 import { formatRootHelp } from "./repl/help.js";
+_profile("import:help");
 import {
 	isValidLogoMode,
 	type LogoDisplayMode,
 	LOGO_MODE_HELP,
 } from "./config/index.js";
+_profile("import:config");
 import { OUTPUT_FORMAT_HELP } from "./output/types.js";
+_profile("import:output-types");
 import { renderBanner } from "./domains/login/banner/display.js";
+_profile("import:banner");
 import { debugProtocol, emitSessionState } from "./debug/protocol.js";
+_profile("import:debug");
 import { formatFullCLISpec } from "./output/spec.js";
+_profile("import:spec");
 import { HeadlessController } from "./headless/index.js";
+_profile("import:headless");
+
+_profile("imports:complete");
 
 const program = new Command();
+_profile("commander:created");
 
 // Custom help: override default help to show comprehensive root help
 program.configureHelp({
