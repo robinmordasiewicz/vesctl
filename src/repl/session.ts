@@ -127,22 +127,37 @@ export class REPLSession {
 	 * Initialize the session (async operations)
 	 */
 	async initialize(): Promise<void> {
+		const startTime = Date.now();
+		const profile = (label: string) => {
+			if (this._debug || process.env.XCSH_PROFILE === "true") {
+				console.error(
+					`[PROFILE] ${label}: ${Date.now() - startTime}ms`,
+				);
+			}
+		};
+
+		profile("initialize:start");
+
 		// Initialize history manager
 		try {
 			this._history = await HistoryManager.create(
 				getHistoryFilePath(),
 				1000,
 			);
+			profile("history:loaded");
 		} catch (error) {
 			console.error("Warning: could not initialize history:", error);
 			this._history = new HistoryManager(getHistoryFilePath(), 1000);
+			profile("history:fallback");
 		}
 
 		// Load active profile if one is set
 		await this.loadActiveProfile();
+		profile("profile:loaded");
 
 		// Validate token and fetch user info if connected and authenticated
 		if (this._apiClient?.isAuthenticated()) {
+			profile("token_validation:start");
 			debugProtocol.auth("token_validation_start", {
 				serverUrl: this._serverUrl,
 				hasApiClient: true,
@@ -152,6 +167,7 @@ export class REPLSession {
 			const result = await this._apiClient.validateToken();
 			this._tokenValidated = result.valid;
 			this._validationError = result.error ?? null;
+			profile("token_validation:complete");
 
 			debugProtocol.auth("token_validation_complete", {
 				valid: result.valid,
@@ -203,8 +219,10 @@ export class REPLSession {
 					});
 
 					// Re-validate with profile token
+					profile("fallback_validation:start");
 					const fallbackResult =
 						await this._apiClient.validateToken();
+					profile("fallback_validation:complete");
 					if (fallbackResult.valid) {
 						this._tokenValidated = true;
 						this._validationError = null;
@@ -253,9 +271,12 @@ export class REPLSession {
 
 			// Only fetch user info if token is valid
 			if (this._tokenValidated) {
+				profile("user_info:start");
 				await this.fetchUserInfo();
+				profile("user_info:complete");
 			}
 		}
+		profile("initialize:complete");
 	}
 
 	/**

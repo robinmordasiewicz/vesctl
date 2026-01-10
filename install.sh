@@ -78,6 +78,141 @@ cleanup() {
 trap cleanup EXIT
 
 # ============================================
+# Installation Conflict Detection
+# ============================================
+
+# Known installation locations for xcsh
+HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/opt/homebrew}"
+HOMEBREW_BIN="${HOMEBREW_PREFIX}/bin"
+LINUXBREW_BIN="/home/linuxbrew/.linuxbrew/bin"
+
+# Find all existing xcsh installations in PATH
+# Returns space-separated list of paths
+find_existing_installations() {
+  FOUND_PATHS=""
+
+  # Check common installation locations
+  for CHECK_DIR in "$DEFAULT_INSTALL_DIR" "$USER_INSTALL_DIR" "$HOMEBREW_BIN" "$LINUXBREW_BIN"; do
+    if [ -f "${CHECK_DIR}/${BINARY_NAME}" ]; then
+      FOUND_PATHS="${FOUND_PATHS} ${CHECK_DIR}/${BINARY_NAME}"
+    fi
+  done
+
+  # Also check what's currently in PATH
+  WHICH_RESULT=$(which -a "$BINARY_NAME" 2>/dev/null || true)
+  if [ -n "$WHICH_RESULT" ]; then
+    for PATH_ENTRY in $WHICH_RESULT; do
+      # Add if not already in our list
+      case "$FOUND_PATHS" in
+        *"$PATH_ENTRY"*) ;; # Already found
+        *) FOUND_PATHS="${FOUND_PATHS} ${PATH_ENTRY}" ;;
+      esac
+    done
+  fi
+
+  echo "$FOUND_PATHS" | xargs
+}
+
+# Check if Homebrew installation exists
+check_homebrew_installation() {
+  # Check for Homebrew cask installation
+  if command_exists brew; then
+    if brew list --cask xcsh >/dev/null 2>&1; then
+      echo "homebrew-cask"
+      return 0
+    fi
+    if brew list xcsh >/dev/null 2>&1; then
+      echo "homebrew-formula"
+      return 0
+    fi
+  fi
+
+  # Check for Homebrew binary directly
+  if [ -f "${HOMEBREW_BIN}/${BINARY_NAME}" ] || [ -f "${LINUXBREW_BIN}/${BINARY_NAME}" ]; then
+    echo "homebrew-binary"
+    return 0
+  fi
+
+  echo ""
+  return 1
+}
+
+# Get version of an xcsh binary
+get_xcsh_version() {
+  BIN_PATH="$1"
+  if [ -x "$BIN_PATH" ]; then
+    "$BIN_PATH" --version 2>/dev/null | head -1 || echo "unknown"
+  else
+    echo "not-executable"
+  fi
+}
+
+# Detect and warn about conflicting installations
+detect_installation_conflicts() {
+  TARGET_DIR="$1"
+
+  EXISTING=$(find_existing_installations)
+  HOMEBREW_TYPE=$(check_homebrew_installation)
+  CONFLICTS_FOUND=false
+
+  # Check for Homebrew installation
+  if [ -n "$HOMEBREW_TYPE" ]; then
+    HOMEBREW_PATH=""
+    if [ -f "${HOMEBREW_BIN}/${BINARY_NAME}" ]; then
+      HOMEBREW_PATH="${HOMEBREW_BIN}/${BINARY_NAME}"
+    elif [ -f "${LINUXBREW_BIN}/${BINARY_NAME}" ]; then
+      HOMEBREW_PATH="${LINUXBREW_BIN}/${BINARY_NAME}"
+    fi
+
+    if [ -n "$HOMEBREW_PATH" ] && [ "$TARGET_DIR" != "$HOMEBREW_BIN" ] && [ "$TARGET_DIR" != "$LINUXBREW_BIN" ]; then
+      HOMEBREW_VER=$(get_xcsh_version "$HOMEBREW_PATH")
+      warning "Homebrew installation detected at: $HOMEBREW_PATH"
+      info "  Version: $HOMEBREW_VER"
+      info "  Installing to $TARGET_DIR may cause PATH conflicts"
+      CONFLICTS_FOUND=true
+    fi
+  fi
+
+  # Check for other existing installations that might conflict
+  for EXISTING_PATH in $EXISTING; do
+    EXISTING_DIR=$(dirname "$EXISTING_PATH")
+
+    # Skip if this is our target directory
+    if [ "$EXISTING_DIR" = "$TARGET_DIR" ]; then
+      continue
+    fi
+
+    # Skip Homebrew paths (already handled above)
+    if [ "$EXISTING_DIR" = "$HOMEBREW_BIN" ] || [ "$EXISTING_DIR" = "$LINUXBREW_BIN" ]; then
+      continue
+    fi
+
+    EXISTING_VER=$(get_xcsh_version "$EXISTING_PATH")
+    warning "Existing installation detected at: $EXISTING_PATH"
+    info "  Version: $EXISTING_VER"
+    CONFLICTS_FOUND=true
+  done
+
+  if [ "$CONFLICTS_FOUND" = "true" ]; then
+    printf "\n"
+    warning "PATH Conflict Warning"
+    info "Multiple xcsh installations may cause confusion about which version runs."
+    info "The first matching binary in your \$PATH will be executed."
+    printf "\n"
+    info "To resolve conflicts, you can:"
+    info "  1. Remove old installations: rm <path-to-old-binary>"
+    info "  2. Uninstall Homebrew version: brew uninstall --cask xcsh"
+    info "  3. Adjust your PATH order in ~/.zshrc or ~/.bashrc"
+    printf "\n"
+    info "Current PATH order (first match wins):"
+    # Show which binary would be executed
+    FIRST_MATCH=$(which "$BINARY_NAME" 2>/dev/null || echo "not-in-path")
+    info "  Active: $FIRST_MATCH"
+    printf "\n"
+  fi
+}
+
+# ============================================
 # HTTP Client Abstraction
 # ============================================
 
@@ -865,6 +1000,28 @@ If installed elsewhere, set F5XC_INSTALL_DIR:
   fi
 
   success "xcsh has been uninstalled"
+
+  # Check for Homebrew installation
+  HOMEBREW_TYPE=$(check_homebrew_installation)
+  if [ -n "$HOMEBREW_TYPE" ]; then
+    printf "\n"
+    warning "Homebrew installation still exists"
+    info "To also remove the Homebrew version, run:"
+    info "  brew uninstall --cask xcsh"
+  fi
+
+  # Check for other installations that may still exist
+  REMAINING=$(find_existing_installations)
+  if [ -n "$REMAINING" ]; then
+    printf "\n"
+    warning "Other xcsh installations still exist:"
+    for REMAINING_PATH in $REMAINING; do
+      REMAINING_VER=$(get_xcsh_version "$REMAINING_PATH")
+      info "  $REMAINING_PATH ($REMAINING_VER)"
+    done
+    printf "\n"
+    info "To completely remove xcsh, also remove these installations."
+  fi
 }
 
 # ============================================
@@ -1010,7 +1167,10 @@ On Alpine:        apk add curl"
       ;;
   esac
 
-  # Check for existing installation
+  # Check for conflicting installations in other locations
+  detect_installation_conflicts "$INSTALL_DIR"
+
+  # Check for existing installation in target directory
   if [ -f "${INSTALL_DIR}/${BINARY_NAME}" ]; then
     EXISTING_VERSION=$("${INSTALL_DIR}/${BINARY_NAME}" version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || echo "unknown")
     if [ "$EXISTING_VERSION" = "$VERSION" ]; then
@@ -1039,6 +1199,26 @@ On Alpine:        apk add curl"
   printf "\n"
   success "xcsh v${VERSION} installed successfully!"
   printf "\n"
+
+  # Show which binary will be executed (important for PATH conflicts)
+  ACTIVE_BINARY=$(which "$BINARY_NAME" 2>/dev/null || echo "")
+  ACTIVE_VERSION=$(get_xcsh_version "$ACTIVE_BINARY")
+  if [ -n "$ACTIVE_BINARY" ]; then
+    if [ "$ACTIVE_BINARY" = "${INSTALL_DIR}/${BINARY_NAME}" ]; then
+      info "Active binary: $ACTIVE_BINARY ($ACTIVE_VERSION)"
+    else
+      warning "Active binary: $ACTIVE_BINARY ($ACTIVE_VERSION)"
+      warning "This is NOT the version you just installed!"
+      info "Installed to: ${INSTALL_DIR}/${BINARY_NAME}"
+      printf "\n"
+      info "To use the newly installed version, either:"
+      info "  1. Remove the conflicting binary: rm $ACTIVE_BINARY"
+      info "  2. Adjust PATH order in your shell configuration"
+      info "  3. Run directly: ${INSTALL_DIR}/${BINARY_NAME}"
+    fi
+    printf "\n"
+  fi
+
   printf "%s\n" "Get started:"
   printf "  # Start interactive shell\n"
   printf "  ${CYAN}xcsh${NC}\n"
